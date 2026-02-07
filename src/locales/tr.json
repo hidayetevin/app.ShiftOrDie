@@ -1,0 +1,30 @@
+{
+    "menu": {
+        "play": "OYNA",
+        "daily_tasks": "Günlük Görevler",
+        "style": "Stil",
+        "settings": "Ayarlar"
+    },
+    "game": {
+        "paused": "DURAKLATILDI",
+        "game_over": "OYUN BİTTİ",
+        "new_record": "YENİ REKOR!",
+        "your_score": "Skorun",
+        "high_score": "En Yüksek",
+        "continue": "Devam Et",
+        "restart": "Yeniden Başla",
+        "quit": "Çık"
+    },
+    "tasks": {
+        "daily_tasks": "Günlük Görevler",
+        "claim": "AL",
+        "survive": "{{time}} saniye hayatta kal",
+        "shifts": "{{count}} kez şerit değiştir",
+        "perfect": "{{count}} mükemmel geçiş yap"
+    },
+    "settings": {
+        "music": "Müzik",
+        "sfx": "Ses Efektleri",
+        "language": "Dil"
+    }
+}

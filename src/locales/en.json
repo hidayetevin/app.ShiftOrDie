@@ -1,0 +1,30 @@
+{
+    "menu": {
+        "play": "PLAY",
+        "daily_tasks": "Daily Tasks",
+        "style": "Style",
+        "settings": "Settings"
+    },
+    "game": {
+        "paused": "PAUSED",
+        "game_over": "GAME OVER",
+        "new_record": "NEW RECORD!",
+        "your_score": "Your Score",
+        "high_score": "High Score",
+        "continue": "Continue",
+        "restart": "Restart",
+        "quit": "Quit"
+    },
+    "tasks": {
+        "daily_tasks": "Daily Tasks",
+        "claim": "CLAIM",
+        "survive": "Survive {{time}} seconds",
+        "shifts": "Make {{count}} lane shifts",
+        "perfect": "Get {{count}} perfect shifts"
+    },
+    "settings": {
+        "music": "Music",
+        "sfx": "Sound Effects",
+        "language": "Language"
+    }
+}
