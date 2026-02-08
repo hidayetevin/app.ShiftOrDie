@@ -149,12 +149,12 @@ export class EnvironmentManager {
     }
 
     createLighting() {
-        // Ambient light for base illumination
-        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+        // Ambient light for base illumination (Brigther)
+        const ambient = new THREE.AmbientLight(0xffffff, 1.0);
         this.scene.add(ambient);
 
-        // Main directional light from above
-        const directional = new THREE.DirectionalLight(0xffffff, 0.6);
+        // Main directional light from above (Brighter)
+        const directional = new THREE.DirectionalLight(0xffffff, 1.2);
         directional.position.set(0, 10, 5);
         directional.castShadow = true;
         directional.shadow.camera.left = -10;
@@ -167,8 +167,8 @@ export class EnvironmentManager {
         directional.shadow.mapSize.height = 1024;
         this.scene.add(directional);
 
-        // Hemisphere light for ambient fill
-        const hemisphere = new THREE.HemisphereLight(0x87ceeb, 0x2a2a2a, 0.3);
+        // Hemisphere light for ambient fill (Brighter)
+        const hemisphere = new THREE.HemisphereLight(0x87ceeb, 0x2a2a2a, 0.8);
         this.scene.add(hemisphere);
 
         // Add fewer point lights along corridor (torch-like atmosphere)
@@ -176,13 +176,13 @@ export class EnvironmentManager {
         const spacing = 30;
         for (let z = 0; z < 180; z += spacing) {
             // Left side torches
-            const leftLight = new THREE.PointLight(0xffaa55, 0.4, 10);
+            const leftLight = new THREE.PointLight(0xffaa55, 0.8, 20);
             leftLight.position.set(-4, 3, z);
             // NO shadow casting to save texture units
             this.scene.add(leftLight);
 
             // Right side torches
-            const rightLight = new THREE.PointLight(0xffaa55, 0.4, 10);
+            const rightLight = new THREE.PointLight(0xffaa55, 0.8, 20);
             rightLight.position.set(4, 3, z);
             // NO shadow casting to save texture units
             this.scene.add(rightLight);
