@@ -183,6 +183,7 @@ class Game {
             this.platform.update(deltaTime, this.currentSpeed);
             this.collision.update();
             this.vfx.update(deltaTime);
+            this.environment.update(deltaTime, this.currentSpeed);
             this.player.update(deltaTime, this.currentSpeed, this.vfx, true);
 
             // Dynamic camera tracking with speed-based smoothing

@@ -5,6 +5,7 @@ export class EnvironmentManager {
         this.scene = scene;
         this.walls = [];
         this.floorSegments = [];
+        this.wallCubes = []; // Track wall decoration cubes
         this.init();
     }
 
@@ -112,6 +113,7 @@ export class EnvironmentManager {
                 cube.position.set(-4.9, (cubeSize / 2) + (h * cubeSize), z);
                 cube.castShadow = true;
                 this.scene.add(cube);
+                this.wallCubes.push(cube); // Track for movement
             }
 
             // Random stacking on right wall
@@ -121,6 +123,7 @@ export class EnvironmentManager {
                 cube.position.set(4.9, (cubeSize / 2) + (h * cubeSize), z);
                 cube.castShadow = true;
                 this.scene.add(cube);
+                this.wallCubes.push(cube); // Track for movement
             }
         }
     }
@@ -179,6 +182,19 @@ export class EnvironmentManager {
             rightLight.position.set(4, 3, z);
             // NO shadow casting to save texture units
             this.scene.add(rightLight);
+        }
+    }
+
+    update(deltaTime, gameSpeed) {
+        // Move wall decoration cubes backwards
+        for (let i = this.wallCubes.length - 1; i >= 0; i--) {
+            const cube = this.wallCubes[i];
+            cube.position.z -= gameSpeed * deltaTime;
+
+            // Recycle cubes that passed the camera
+            if (cube.position.z < -20) {
+                cube.position.z += 200; // Move to front
+            }
         }
     }
 }
