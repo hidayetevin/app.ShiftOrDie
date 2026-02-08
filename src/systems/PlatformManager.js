@@ -20,16 +20,65 @@ export class PlatformManager {
             CONFIG.PLATFORM.LENGTH
         );
 
-        for (let i = 0; i < CONFIG.PLATFORM.POOL_SIZE; i++) {
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.receiveShadow = true;
-            mesh.castShadow = true;
-            mesh.visible = false;
-            mesh.userData = { isDangerous: false, lane: 0 };
+        // Load texture (from the cube HTML example)
+        const textureLoader = new THREE.TextureLoader();
+        const crateTexture = textureLoader.load('/textures/crate.gif', (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            console.log('✅ Crate texture loaded');
+        });
 
-            this.pool.push(mesh);
-            this.scene.add(mesh);
+        // Create cube geometry for obstacles
+        const cubeSize = 0.8;
+        const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+        for (let i = 0; i < CONFIG.PLATFORM.POOL_SIZE; i++) {
+            const platformGroup = new THREE.Group();
+
+            // Base platform (invisible or minimal)
+            const baseMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.3
+            });
+            const baseMesh = new THREE.Mesh(geometry, baseMaterial);
+            baseMesh.receiveShadow = true;
+            baseMesh.visible = false;
+            platformGroup.add(baseMesh);
+
+            // Obstacle cubes (using textured material like HTML example)
+            const cubes = [];
+            const numCubes = 4; // 4 cubes in a row
+            const spacing = CONFIG.PLATFORM.LENGTH / (numCubes + 1);
+
+            for (let j = 0; j < numCubes; j++) {
+                // Use MeshBasicMaterial with texture (from cube HTML example)
+                const cubeMat = new THREE.MeshBasicMaterial({ map: crateTexture });
+                const cube = new THREE.Mesh(cubeGeometry, cubeMat);
+                cube.castShadow = true;
+                cube.receiveShadow = true;
+
+                // Position cubes along the platform (Z-axis), not stacked
+                cube.position.y = cubeSize / 2; // Just above ground
+                cube.position.z = -CONFIG.PLATFORM.LENGTH / 2 + spacing * (j + 1);
+                cube.position.x = 0; // Centered on lane
+
+                // Static cubes - no rotation
+                cube.rotation.set(0, 0, 0);
+
+                cubes.push(cube);
+                platformGroup.add(cube);
+            }
+
+            platformGroup.visible = false;
+            platformGroup.userData = {
+                isDangerous: false,
+                lane: 0,
+                baseMesh: baseMesh,
+                cubes: cubes
+            };
+
+            this.pool.push(platformGroup);
+            this.scene.add(platformGroup);
         }
     }
 
@@ -61,14 +110,28 @@ export class PlatformManager {
             if (!platform) continue;
 
             const status = this.ruleManager.getLaneStatus(i);
-            platform.material.color.setHex(status === 'hazard' ? 0xff0000 : 0x00ff00);
-            platform.userData.isDangerous = (status === 'hazard');
+            const isDangerous = (status === 'hazard');
+
+            platform.userData.isDangerous = isDangerous;
             platform.userData.lane = i;
+
+            // Show/hide cubes based on danger
+            if (platform.userData.cubes) {
+                platform.userData.cubes.forEach(cube => {
+                    cube.visible = isDangerous;
+                });
+            }
+
+            // Show/hide base platform
+            if (platform.userData.baseMesh) {
+                platform.userData.baseMesh.visible = !isDangerous;
+                platform.userData.baseMesh.material.color.setHex(isDangerous ? 0xff0000 : 0x00ff00);
+            }
 
             platform.position.set(
                 CONFIG.LANE.POSITIONS[i],
                 0,
-                CONFIG.PLATFORM.SPAWN_DISTANCE + 10 // Spawn ahead
+                CONFIG.PLATFORM.SPAWN_DISTANCE + 10
             );
 
             platform.visible = true;

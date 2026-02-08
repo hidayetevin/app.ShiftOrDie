@@ -23,8 +23,14 @@ Based on **prompts_FINAL_COMPLETE.md**, here is the final progress report:
 - [x] **PROMPT 22 – ERROR HANDLING & RECOVERY**: Global error catchers and Recovery UI.
 - [x] **PROMPT 23 – INTEGRATION & TESTING**: All systems wired and game-loop verified.
 
+## Character & Visuals
+- [x] **3D Character Model**: Professional Soldier.glb model with skeletal animations
+- [x] **Character Animations**: Idle, Walk, Run with smooth transitions
+- [x] **Running Effects**: Speed trails, footstep particles, camera shake
+- [x] **Procedural VFX**: Death burst, perfect shift feedback, lane switch effects
+
 ## Asset Ready (Hooks & Logic Integrated)
-- [x] **PROMPT 17 – CHARACTER LOGIC**: Character Group structure ready for 3D model injection.
+- [x] **PROMPT 17 – CHARACTER LOGIC**: GLTFLoader integration with full animation system
 - [x] **PROMPT 18 – GAME ASSETS**: Rule icons and platform color logic integrated.
 - [x] **PROMPT 19 – UI ASSETS**: Icon placeholders and CSS styled backgrounds.
 - [ ] **PROMPT 21 – STORE ASSETS**: Guide and technical metadata ready for store submission.
