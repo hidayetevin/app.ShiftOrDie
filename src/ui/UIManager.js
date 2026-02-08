@@ -297,7 +297,10 @@ export class UIManager {
         this.root.appendChild(div);
 
         document.getElementById('btn-continue-game').onclick = () => gameState.transition(GameStates.PLAYING);
-        document.getElementById('btn-restart-paused').onclick = () => gameState.transition(GameStates.PLAYING);
+        document.getElementById('btn-restart-paused').onclick = () => {
+            this.game.resetGame();
+            gameState.transition(GameStates.PLAYING);
+        };
         document.getElementById('btn-quit').onclick = () => gameState.transition(GameStates.MENU);
     }
 
