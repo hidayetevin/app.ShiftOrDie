@@ -13,6 +13,7 @@ export class Player {
         this.isLoaded = false;
         this.isJumping = false;
         this.isShooting = false;
+        this.isDying = false; // Flag to lock death animation
         this.game = null;
         this.currentAnimation = 'stand';
         this.projectiles = []; // Track active projectiles
@@ -78,11 +79,35 @@ export class Player {
         this.character.loadParts(config);
     }
 
+    reset() {
+        this.currentLane = 1;
+        this.mesh.position.set(CONFIG.LANE.POSITIONS[1], 0, 0);
+        this.invulnerable = false;
+        this.isJumping = false;
+        this.isShooting = false;
+        this.isDying = false; // Reset death flag
+
+        // Clear projectiles
+        this.projectiles.forEach(proj => this.scene.remove(proj));
+        this.projectiles = [];
+
+        // Reset animation
+        if (this.isLoaded) {
+            this.setAnimation('stand');
+        }
+    }
+
     update(deltaTime, speed, vfx, isPlaying) {
         if (!this.isLoaded) return;
 
         // Update MD2 internal mixer
         this.character.update(deltaTime);
+
+        // If dying, don't override animation
+        if (this.isDying) {
+            this.updateProjectiles(deltaTime, speed, vfx);
+            return;
+        }
 
         // Animation Logic
         if (isPlaying) {
@@ -328,6 +353,9 @@ export class Player {
         if (!this.isLoaded) return;
 
         console.log('💀 Playing death animation...');
+
+        // Lock death animation
+        this.isDying = true;
 
         // Stop any ongoing movement
         this.isJumping = false;

@@ -118,9 +118,9 @@ export class CollisionDetector {
         // Play death animation
         this.player.playDeathAnimation();
 
-        // Delay game over to let animation play
+        // After animation, show game over
         setTimeout(() => {
             gameState.transition(GameStates.GAMEOVER);
-        }, 1500); // 1.5 second delay for death animation
+        }, 1000); // 1 second for death animation
     }
 }
