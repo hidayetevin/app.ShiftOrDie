@@ -136,11 +136,45 @@ export class Player {
                 vfx.emitBurst(proj.position, 0xff3300, 2, 0.1);
             }
 
-            // Remove if traveled too far
-            proj.distanceTraveled += proj.speed * deltaTime;
-            if (proj.distanceTraveled > 50 || proj.position.z < -30) {
+            // Check collision with soldier obstacles
+            let hitSoldier = false;
+            if (this.game && this.game.platform) {
+                const platforms = this.game.platform.active;
+                for (const platform of platforms) {
+                    if (platform.userData.soldierObstacle) {
+                        const soldier = platform.userData.soldierObstacle;
+                        const soldierWorldPos = new THREE.Vector3();
+                        soldier.getWorldPosition(soldierWorldPos);
+
+                        // Simple distance check
+                        const distance = proj.position.distanceTo(soldierWorldPos);
+                        if (distance < 1.5) { // Hit radius
+                            // KILL SOLDIER!
+                            console.log('💥 SOLDIER HIT!');
+
+                            // Explosion effect
+                            if (vfx) {
+                                vfx.emitBurst(soldierWorldPos, 0xff0000, 30, 0.3);
+                            }
+
+                            // Remove soldier from platform
+                            platform.remove(soldier);
+                            platform.userData.soldierObstacle = null;
+                            platform.userData.hasJumpableObstacle = false;
+
+                            hitSoldier = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Remove projectile if hit or traveled too far
+            if (hitSoldier || proj.distanceTraveled > 50 || proj.position.z < -30) {
                 this.scene.remove(proj);
                 this.projectiles.splice(i, 1);
+            } else {
+                proj.distanceTraveled += proj.speed * deltaTime;
             }
         }
     }
