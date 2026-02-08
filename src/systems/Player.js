@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MD2Character } from 'three/examples/jsm/misc/MD2Character.js';
 import { gsap } from 'gsap';
 import { CONFIG } from '../core/Config';
 
@@ -7,14 +7,13 @@ export class Player {
     constructor(scene) {
         this.scene = scene;
         this.mesh = null;
-        this.model = null;
-        this.mixer = null;
-        this.actions = {};
+        this.character = null;
         this.currentLane = 1;
         this.invulnerable = false;
         this.isLoaded = false;
-        this.isJumping = false; // Track jump state
-        this.game = null; // Reference to game for speed control
+        this.isJumping = false;
+        this.game = null;
+        this.currentAnimation = 'stand';
 
         this.init();
     }
@@ -24,188 +23,97 @@ export class Player {
     }
 
     init() {
+        // Create a container group for the character
         this.mesh = new THREE.Group();
         this.mesh.position.set(CONFIG.LANE.POSITIONS[this.currentLane], 0, 0);
         this.scene.add(this.mesh);
 
-        const loader = new GLTFLoader();
-        loader.load(
-            '/models/gltf/Soldier.glb',
-            (gltf) => this.onModelLoaded(gltf),
-            (progress) => console.log('Loading model:', (progress.loaded / progress.total * 100).toFixed(2) + '%'),
-            (error) => {
-                console.error('Error loading model:', error);
-                this.createFallbackModel();
-            }
-        );
-    }
-
-    onModelLoaded(gltf) {
-        this.model = gltf.scene;
-        this.mesh.add(this.model);
-
-        // Rotate model to face forward (from Walk example)
-        this.model.rotation.y = Math.PI;
-
-        // Apply materials (from Walk example)
-        this.model.traverse((object) => {
-            if (object.isMesh) {
-                object.castShadow = true;
-                object.receiveShadow = true;
-
-                if (object.name === 'vanguard_Mesh') {
-                    object.material.metalness = 1.0;
-                    object.material.roughness = 0.2;
-                    object.material.color.set(1, 1, 1);
-                    object.material.metalnessMap = object.material.map;
-                } else {
-                    object.material.metalness = 1;
-                    object.material.roughness = 0;
-                    object.material.transparent = true;
-                    object.material.opacity = 0.8;
-                    object.material.color.set(1, 1, 1);
-                }
-            }
-        });
-
-        // Setup animations
-        const animations = gltf.animations;
-        this.mixer = new THREE.AnimationMixer(this.model);
-
-        console.log('📦 Available animations:', animations.map((a, i) => `${i}: ${a.name}`));
-
-        // Use exact indices from Walk example
-        this.actions = {
-            Idle: this.mixer.clipAction(animations[0]),
-            Walk: this.mixer.clipAction(animations[3]),
-            Run: this.mixer.clipAction(animations[1])
+        // MD2 Character Configuration
+        const config = {
+            baseUrl: 'models/md2/ratamahatta/',
+            body: 'ratamahatta.md2',
+            skins: ['ratamahatta.png'], // User must place image in models/md2/ratamahatta/skins/
+            weapons: [] // Weapons disabled to simplify setup
         };
 
-        console.log('✅ Loaded actions:', Object.keys(this.actions));
+        this.character = new MD2Character();
+        this.character.scale = 0.05; // Slightly larger scale
 
-        // Setup animation weights (from Walk example)
-        for (const name in this.actions) {
-            this.actions[name].enabled = true;
-            this.actions[name].setEffectiveTimeScale(1);
-            if (name !== 'Idle') {
-                this.actions[name].setEffectiveWeight(0);
-            } else {
-                this.actions[name].setEffectiveWeight(1);
-            }
-        }
+        this.character.onLoadComplete = () => {
+            console.log('✅ MD2 Character Loaded');
 
-        // Start with Idle
-        this.actions.Idle.play();
-        this.currentAction = 'Idle';
-        this.isLoaded = true;
+            // Setup the character mesh
+            this.character.root.rotation.y = 0; // Face away from camera
+            this.mesh.add(this.character.root);
 
-        console.log('✅ Player model loaded - Starting animation:', this.currentAction);
-    }
+            // Set initial skin
+            this.character.setSkin(0);
 
-    createFallbackModel() {
-        console.warn('⚠️ Using fallback geometry');
-        const matBody = new THREE.MeshStandardMaterial({
-            color: 0x444444,
-            metalness: 1.0,
-            roughness: 0.1,
-            emissive: 0x00ffff,
-            emissiveIntensity: 0.1
-        });
+            // Log available animations
+            const animations = this.character.meshBody.geometry.animations;
+            console.log('📦 Available animations:', animations.map(a => a.name));
 
-        const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.25, 0.5, 4, 8), matBody);
-        torso.position.y = 1.0;
-        torso.castShadow = true;
-        this.mesh.add(torso);
+            // Start idle animation
+            this.setAnimation('stand');
 
-        this.isLoaded = true;
+            this.isLoaded = true;
+        };
+
+        // Start loading
+        this.character.loadParts(config);
     }
 
     update(deltaTime, speed, vfx, isPlaying) {
         if (!this.isLoaded) return;
 
-        // Update animation mixer
-        if (this.mixer) {
-            this.mixer.update(deltaTime);
+        // Update MD2 internal mixer
+        this.character.update(deltaTime);
 
-            // In gameplay, always animate (this is an endless runner)
-            if (isPlaying) {
-                const targetAction = speed > 10 ? 'Run' : 'Walk';
-                if (this.currentAction !== targetAction) {
-                    console.log(`🏃 Animation switch: ${this.currentAction} → ${targetAction} (speed: ${speed.toFixed(1)})`);
-                    this.fadeToAction(targetAction, 0.3);
+        // Animation Logic
+        if (isPlaying) {
+            let targetAnimation = 'run';
+
+            // If jumping, override run
+            if (this.isJumping) {
+                targetAnimation = 'jump';
+            } else if (speed < 0.1) {
+                targetAnimation = 'stand';
+            }
+
+            // Sync animation speed with game speed (optional, for smoother run)
+            // MD2Character doesn't support dynamic speed easily without accessing mixer directly
+            // but we can setPlaybackRate if needed. For now, keep it simple.
+
+            if (this.currentAnimation !== targetAnimation) {
+                this.setAnimation(targetAnimation);
+            }
+
+            // VFX Handling
+            if (this.currentAnimation === 'run' && vfx) {
+                // Ground particles
+                if (Math.random() < 0.1) {
+                    const groundPos = this.mesh.position.clone();
+                    groundPos.y = 0.1;
+                    vfx.emitBurst(groundPos, 0xaaaaaa, 3, 0.05);
                 }
+            }
 
-                // Running effects
-                if (this.currentAction === 'Run' && vfx) {
-                    // Speed trail particles
-                    if (Math.random() < 0.3) {
-                        const trailPos = this.mesh.position.clone();
-                        trailPos.y += 0.5;
-                        vfx.emitBurst(trailPos, 0x00ffff, 2, 0.15);
-                    }
-
-                    // Ground impact particles (on footsteps)
-                    const animTime = this.actions.Run.time;
-                    const stepInterval = 0.4;
-                    if (Math.abs(animTime % stepInterval) < 0.05) {
-                        const groundPos = this.mesh.position.clone();
-                        groundPos.y = 0.1;
-                        vfx.emitBurst(groundPos, 0xaaaaaa, 5, 0.08);
-                    }
-
-                    // Lean forward when running
-                    this.mesh.rotation.x = -0.1;
-                } else if (this.currentAction === 'Walk' && vfx) {
-                    // Subtle footstep effects when walking
-                    const animTime = this.actions.Walk.time;
-                    const stepInterval = 0.5;
-                    if (Math.abs(animTime % stepInterval) < 0.05) {
-                        const groundPos = this.mesh.position.clone();
-                        groundPos.y = 0.1;
-                        vfx.emitBurst(groundPos, 0x666666, 3, 0.05);
-                    }
-
-                    // Reset rotation
-                    this.mesh.rotation.x *= 0.9;
-                }
-            } else {
-                // Not playing - show idle
-                if (this.currentAction !== 'Idle') {
-                    this.fadeToAction('Idle', 0.5);
-                }
-                this.mesh.rotation.x *= 0.9;
+        } else {
+            // Not playing -> Stand
+            if (this.currentAnimation !== 'stand') {
+                this.setAnimation('stand');
             }
         }
     }
 
-    fadeToAction(name, duration = 0.3) {
-        if (!this.actions[name]) {
-            console.error(`❌ Action ${name} not found!`);
-            return;
-        }
+    setAnimation(name) {
+        if (this.currentAnimation === name) return;
 
-        const current = this.actions[name];
-        const old = this.actions[this.currentAction];
-
-        if (current === old) return;
-
-        console.log(`🎬 Fading: ${this.currentAction} → ${name}`);
-
-        // Use the Walk example's exact transition method
-        current.reset();
-        current.enabled = true;
-        current.setEffectiveWeight(1);
-        current.time = 0;
-
-        old.stopFading();
-        current.stopFading();
-
-        // Smooth fade transition
-        old.fadeOut(duration);
-        current.fadeIn(duration);
-        current.play();
-
-        this.currentAction = name;
+        // Map generic names to MD2 specific names if needed
+        // MD2 standard: stand, run, jump, attack, pain, death, flip, salute, etc.
+        console.log(`🎬 Switching animation: ${name}`);
+        this.character.setAnimation(name);
+        this.currentAnimation = name;
     }
 
     switchLane(vfx, direction = 'right') {
@@ -217,80 +125,62 @@ export class Player {
             newLane = Math.min(CONFIG.LANE.COUNT - 1, this.currentLane + 1);
         }
 
-        // Check if actually moved
-        if (newLane === this.currentLane) {
-            return false; // No movement (already at edge)
-        }
+        if (newLane === this.currentLane) return false;
 
         this.currentLane = newLane;
         const duration = CONFIG.PLAYER.SWITCH_DURATION;
 
-        // Diagonal rotation (model base is already Math.PI)
-        // Larger angle for more visible diagonal movement
-        // REVERSED: Right swipe = turn left, Left swipe = turn right (for correct diagonal)
-        const diagonalRotation = direction === 'left' ? -1.0 : 1.0; // ~57 degrees
-        const forwardRotation = 0;
+        // Diagonal rotation for MD2
+        const diagonalRotation = direction === 'left' ? -0.5 : 0.5;
 
-        // Animate position
         gsap.to(this.mesh.position, {
             x: CONFIG.LANE.POSITIONS[this.currentLane],
             duration: duration,
             ease: 'power2.out'
         });
 
-        // Animate rotation: face diagonal during movement, return to forward after
+        // Tilt effect
         gsap.timeline()
             .to(this.mesh.rotation, {
                 y: diagonalRotation,
-                duration: duration * 0.6,
+                duration: duration * 0.5,
                 ease: 'power2.out'
             })
             .to(this.mesh.rotation, {
-                y: forwardRotation,
-                duration: duration * 0.4,
+                y: 0,
+                duration: duration * 0.5,
                 ease: 'power2.in'
             });
 
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ffff, 5);
-
-        return true; // Movement successful
+        return true;
     }
 
     jump(vfx) {
-        // Prevent jumping if already in air or during lane switch
         if (this.isJumping) return;
 
         this.isJumping = true;
         const jumpHeight = 1.5;
-        const jumpDuration = 0.4;
-        const speedBoost = 1.75; // Multiply environment speed during jump
+        const jumpDuration = 0.6; // Slightly longer for MD2 jump anim
 
-        // Boost environment speed during jump
-        if (this.game) {
-            this.game.speedMultiplier = speedBoost;
-        }
+        // Play jump animation
+        this.setAnimation('jump');
 
-        // Jump arc: up then down (vertical only, no Z movement)
         const jumpTimeline = gsap.timeline();
 
-        // Jump up
         jumpTimeline.to(this.mesh.position, {
             y: jumpHeight,
             duration: jumpDuration / 2,
             ease: 'power2.out'
         });
 
-        // Land down
         jumpTimeline.to(this.mesh.position, {
             y: 0,
             duration: jumpDuration / 2,
             ease: 'power2.in',
             onComplete: () => {
                 this.isJumping = false;
-                // Reset speed to normal
-                if (this.game) {
-                    this.game.speedMultiplier = 1.0;
-                }
+                this.setAnimation('run'); // Return to run
             }
         });
 
@@ -299,23 +189,17 @@ export class Player {
 
     setInvulnerable(duration) {
         this.invulnerable = true;
-
-        if (this.model) {
-            this.model.traverse(child => {
-                if (child.material) {
-                    child.material.opacity = CONFIG.PLAYER.RESPAWN_OPACITY;
-                }
-            });
+        // MD2 material handling
+        if (this.character && this.character.meshBody) {
+            this.character.meshBody.material.opacity = 0.5;
+            this.character.meshBody.material.transparent = true;
         }
 
         setTimeout(() => {
             this.invulnerable = false;
-            if (this.model) {
-                this.model.traverse(child => {
-                    if (child.material) {
-                        child.material.opacity = 1.0;
-                    }
-                });
+            if (this.character && this.character.meshBody) {
+                this.character.meshBody.material.opacity = 1.0;
+                this.character.meshBody.material.transparent = false;
             }
         }, duration);
     }
@@ -323,20 +207,7 @@ export class Player {
     reset() {
         this.currentLane = 1;
         this.mesh.position.set(CONFIG.LANE.POSITIONS[this.currentLane], 0, 0);
-
-        if (this.model) {
-            this.model.traverse(child => {
-                if (child.material) {
-                    child.material.opacity = 1.0;
-                }
-            });
-        }
-
         this.invulnerable = false;
-
-        // Reset to idle animation
-        if (this.actions.Idle) {
-            this.fadeToAction('Idle', 0.2);
-        }
+        this.setAnimation('stand');
     }
 }
