@@ -48,49 +48,56 @@ export class CollisionDetector {
 
         // Check for jumpable obstacles (gray crates or soldiers on safe lanes)
         if (platform.userData.hasJumpableObstacle) {
-            // Use soldier if present, otherwise use gray cube
-            const obstacleTarget = platform.userData.soldierObstacle || platform.userData.jumpableCube;
+            // SOLDIER = INSTANT DEATH (cannot be jumped)
+            if (platform.userData.soldierObstacle) {
+                this.obstacleBox.setFromObject(platform.userData.soldierObstacle);
 
+                const pMin = this.playerBox.min;
+                const pMax = this.playerBox.max;
+                const oMin = this.obstacleBox.min;
+                const oMax = this.obstacleBox.max;
+
+                const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
+                const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
+                const collisionDepth = 0.3;
+
+                if (overlapX > collisionDepth && overlapZ > collisionDepth) {
+                    console.warn('💀 SOLDIER KILLS PLAYER! Must shoot to survive!');
+                    this.triggerDeath();
+                }
+                return; // Skip gray cube logic
+            }
+
+            // GRAY CUBE = JUMPABLE
+            const obstacleTarget = platform.userData.jumpableCube;
             if (!obstacleTarget) return;
 
             this.obstacleBox.setFromObject(obstacleTarget);
 
-            // Custom intersection check: Require significant overlap
             const pMin = this.playerBox.min;
             const pMax = this.playerBox.max;
             const oMin = this.obstacleBox.min;
             const oMax = this.obstacleBox.max;
 
-            // Calculate overlap on X and Z axes
             const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
             const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
-
-            // Collision Threshold: Objects must overlap by at least 0.3 units
             const collisionDepth = 0.3;
 
             if (overlapX > collisionDepth && overlapZ > collisionDepth) {
-                // NEW: Check if player landed ON TOP of the obstacle
                 const cubeTopY = oMax.y;
                 const playerBottomY = pMin.y;
-                const landingTolerance = 0.2; // How close to top counts as "landed"
+                const landingTolerance = 0.2;
 
                 if (playerBottomY >= cubeTopY - landingTolerance) {
-                    // Player is on top of the obstacle - SAFE!
-                    const obstacleType = platform.userData.soldierObstacle ? 'SOLDIER' : 'CUBE';
-                    console.log(`✅ Landed on ${obstacleType}! Safe to stand.`);
-                    // Don't kill - player can walk on it
+                    console.log('✅ Landed on CUBE! Safe.');
                 } else {
-                    // Player hit from side - check if jumping over
                     const playerHeight = this.player.mesh.position.y;
-                    const jumpThreshold = 0.9; // High threshold for clean jumps
+                    const jumpThreshold = 0.9;
 
                     if (playerHeight > jumpThreshold) {
-                        // Player successfully jumped over obstacle
-                        console.log(`✅ Cleared obstacle! PlayerY: ${playerHeight.toFixed(2)}`);
+                        console.log('✅ Cleared CUBE!');
                     } else {
-                        // Player hit obstacle from side while on ground - DEATH
-                        const obstacleType = platform.userData.soldierObstacle ? 'SOLDIER' : 'OBSTACLE';
-                        console.warn(`💀 DEATH BY ${obstacleType}: PlayerY: ${playerHeight.toFixed(2)}`);
+                        console.warn('💀 DEATH BY CUBE!');
                         this.triggerDeath();
                     }
                 }
