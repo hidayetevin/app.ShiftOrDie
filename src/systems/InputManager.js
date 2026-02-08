@@ -143,19 +143,27 @@ export class InputManager {
         // Player Y is roughly 0.
         const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         const targetPoint = new THREE.Vector3();
-        raycaster.ray.intersectPlane(plane, targetPoint);
+        const intersect = raycaster.ray.intersectPlane(plane, targetPoint);
 
-        if (targetPoint) {
+        if (intersect) {
             const playerPos = this.game.player.mesh.position.clone();
+
+            // Prevent shooting backwards (towards camera, negative Z relative to player)
+            // Or shooting too high up/sky (though intersectPlane handles sky if plane not hit)
+            // Since camera is at Z=-5 looking at +Z, "Backwards" means Z < playerPos.z
+
+            if (targetPoint.z < playerPos.z + 1.0) { // +1.0 buffer to avoid shooting own feet
+                // Shooting backwards or too close -> Don't shoot
+                return;
+            }
+
             const direction = new THREE.Vector3().subVectors(targetPoint, playerPos).normalize();
 
             // Call shoot with direction
             this.player.shoot(this.game.vfx, direction);
             this.game.audio.playSFX('shift');
             console.log('💥 FIRING towards:', direction);
-        } else {
-            // Fallback: Shoot forward
-            this.player.shoot(this.game.vfx);
         }
+        // Else: Clicked on sky or invalid area -> Do nothing (Don't shoot)
     }
 }
