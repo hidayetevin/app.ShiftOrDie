@@ -42,6 +42,10 @@ export class EnvironmentManager {
         floor.position.y = -0.5;
         floor.receiveShadow = true;
         this.scene.add(floor);
+
+        // Store references for animation
+        this.floor = floor;
+        this.floorTexture = groundTexture;
     }
 
     createWalls() {
@@ -186,6 +190,11 @@ export class EnvironmentManager {
     }
 
     update(deltaTime, gameSpeed) {
+        // Scroll floor texture to create movement illusion
+        if (this.floorTexture) {
+            this.floorTexture.offset.y -= gameSpeed * deltaTime * 0.2;
+        }
+
         // Move wall decoration cubes backwards
         for (let i = this.wallCubes.length - 1; i >= 0; i--) {
             const cube = this.wallCubes[i];
