@@ -116,13 +116,7 @@ export class Player {
             // If jumping, override run
             if (this.isJumping) {
                 targetAnimation = 'jump';
-            } else if (speed < 0.1) {
-                targetAnimation = 'stand';
             }
-
-            // Sync animation speed with game speed (optional, for smoother run)
-            // MD2Character doesn't support dynamic speed easily without accessing mixer directly
-            // but we can setPlaybackRate if needed. For now, keep it simple.
 
             if (this.currentAnimation !== targetAnimation) {
                 this.setAnimation(targetAnimation);
