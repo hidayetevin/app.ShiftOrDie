@@ -202,8 +202,21 @@ export class Player {
         this.currentAction = name;
     }
 
-    switchLane(vfx) {
-        this.currentLane = (this.currentLane + 1) % CONFIG.LANE.COUNT;
+    switchLane(vfx, direction = 'right') {
+        let newLane = this.currentLane;
+
+        if (direction === 'left') {
+            newLane = Math.max(0, this.currentLane - 1);
+        } else if (direction === 'right') {
+            newLane = Math.min(CONFIG.LANE.COUNT - 1, this.currentLane + 1);
+        }
+
+        // Check if actually moved
+        if (newLane === this.currentLane) {
+            return false; // No movement (already at edge)
+        }
+
+        this.currentLane = newLane;
 
         gsap.to(this.mesh.position, {
             x: CONFIG.LANE.POSITIONS[this.currentLane],
@@ -213,7 +226,7 @@ export class Player {
 
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ffff, 5);
 
-        return this.currentLane;
+        return true; // Movement successful
     }
 
     setInvulnerable(duration) {
