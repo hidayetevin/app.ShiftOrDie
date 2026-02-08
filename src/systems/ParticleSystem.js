@@ -19,7 +19,7 @@ export class ParticleSystem {
         }
     }
 
-    emitBurst(position, color = 0x00ffff, count = 10) {
+    emitBurst(position, color = 0x00ffff, count = 10, size = 0.1) {
         for (let i = 0; i < count; i++) {
             const particle = this.pool.pop();
             if (!particle) break;
@@ -28,6 +28,7 @@ export class ParticleSystem {
             particle.material.color.setHex(color);
             particle.material.opacity = 1;
             particle.visible = true;
+            particle.scale.setScalar(size);
 
             const velocity = new THREE.Vector3(
                 (Math.random() - 0.5) * 5,
@@ -48,9 +49,10 @@ export class ParticleSystem {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             p.mesh.position.add(p.velocity.clone().multiplyScalar(deltaTime));
+            p.velocity.multiplyScalar(0.95); // Add drag
             p.life -= p.decay;
             p.mesh.material.opacity = p.life;
-            p.mesh.scale.setScalar(p.life);
+            p.mesh.scale.setScalar(p.life * 0.15);
 
             if (p.life <= 0) {
                 p.mesh.visible = false;

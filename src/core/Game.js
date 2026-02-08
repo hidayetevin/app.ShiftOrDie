@@ -56,6 +56,11 @@ class Game {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Tone Mapping & Exposure (from Walk Example)
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 0.8;
+
         document.getElementById('game-container').appendChild(this.renderer.domElement);
 
         // Scene
@@ -199,7 +204,16 @@ class Game {
             this.platform.update(deltaTime, this.currentSpeed);
             this.collision.update();
             this.vfx.update(deltaTime);
-            this.camera.position.x += (this.player.mesh.position.x - this.camera.position.x) * 0.1;
+            this.player.update(deltaTime, this.currentSpeed, this.vfx, true);
+
+            // Dynamic camera tracking with speed-based smoothing
+            const smoothFactor = this.currentSpeed > 10 ? 0.15 : 0.1;
+            this.camera.position.x += (this.player.mesh.position.x - this.camera.position.x) * smoothFactor;
+
+            // Camera shake effect when running fast
+            if (this.currentSpeed > 12) {
+                this.camera.position.y += Math.sin(Date.now() * 0.01) * 0.02;
+            }
 
             this.progression.updateTaskProgress('survival', this.score.timeSurvived);
         }
