@@ -15,6 +15,13 @@ export class PlatformManager {
 
         this.loadSoldierModel();
         this.initPool();
+
+        this.enemyProjectiles = [];
+        this.game = null;
+    }
+
+    setGame(game) {
+        this.game = game;
     }
 
     loadSoldierModel() {
@@ -124,10 +131,23 @@ export class PlatformManager {
     update(deltaTime, gameSpeed) {
         this.timeSinceLastSpawn += deltaTime;
 
-        // Move active platforms
+        // Move active platforms & handle soldier shooting
         for (let i = this.active.length - 1; i >= 0; i--) {
             const platform = this.active[i];
             platform.position.z -= gameSpeed * deltaTime;
+
+            // Soldier Shooting Logic
+            if (platform.userData.soldierObstacle && platform.visible) {
+                const soldier = platform.userData.soldierObstacle;
+                soldier.userData.lastShotTime += deltaTime;
+
+                // Fire only if within range and cooldown passed
+                // Range: Z < 30 (close enough to see) and Z > 5 (not passed player yet)
+                if (platform.position.z < 30 && platform.position.z > 2 && soldier.userData.lastShotTime > 1.5) {
+                    this.fireEnemyBullet(platform, soldier);
+                    soldier.userData.lastShotTime = 0; // Reset timer
+                }
+            }
 
             // Recycle platforms behind camera
             if (platform.position.z < CONFIG.PLATFORM.DESPAWN_DISTANCE) {
@@ -139,6 +159,85 @@ export class PlatformManager {
         if (this.timeSinceLastSpawn >= CONFIG.PLATFORM.SPAWN_INTERVAL) {
             this.spawnRow();
             this.timeSinceLastSpawn = 0;
+        }
+
+        // Update Enemy Projectiles
+        this.updateEnemyProjectiles(deltaTime);
+    }
+
+    fireEnemyBullet(platform, soldier) {
+        if (!this.game || !this.game.player) return;
+
+        // Get soldier world position
+        const startPos = new THREE.Vector3();
+        soldier.getWorldPosition(startPos);
+        startPos.y += 1.5; // Shoulder height
+
+        // Shoot straight ahead (towards player at Z=0)
+        // Since soldier is at positive Z and player is at 0, direction is -Z
+        const direction = new THREE.Vector3(0, 0, -1);
+
+        // Create Bullet Mesh (Red/Orange Sphere)
+        const geometry = new THREE.SphereGeometry(0.15, 8, 8);
+        const material = new THREE.MeshBasicMaterial({ color: 0xff4400 });
+        const bullet = new THREE.Mesh(geometry, material);
+        bullet.position.copy(startPos);
+
+        // Store velocity and lifetime
+        const speed = 15; // Slower than player bullets so they can be dodged?
+        bullet.userData = {
+            velocity: direction.multiplyScalar(speed),
+            lifetime: 3.0 // Seconds
+        };
+
+        this.scene.add(bullet);
+        this.enemyProjectiles.push(bullet);
+    }
+
+    updateEnemyProjectiles(deltaTime) {
+        if (!this.game || !this.game.player) return;
+
+        for (let i = this.enemyProjectiles.length - 1; i >= 0; i--) {
+            const bullet = this.enemyProjectiles[i];
+
+            // Move bullet
+            bullet.position.add(bullet.userData.velocity.clone().multiplyScalar(deltaTime));
+            bullet.userData.lifetime -= deltaTime;
+
+            // Check Collision with Player
+            const playerPos = this.game.player.mesh.position.clone();
+            const dist = bullet.position.distanceTo(playerPos);
+
+            if (dist < 0.8 && !this.game.player.isDying && !this.game.player.invulnerable) {
+                console.log('💥 Player Hit by Enemy Bullet!');
+
+                // Trigger Player Death
+                this.game.player.playDeathAnimation();
+
+                // Transition Game State after short delay or immediately?
+                // Let GameLoop handle state transition usually, but here we can trigger it.
+                // Assuming GameLoop checks player state or we call a method on Game.
+
+                // For now, let's just trigger death animation. The collision detection might handle game over.
+                // Or we can manually transition:
+                // import { gameState, GameStates } from '../core/GameState'; // Need to import this at top if used
+                // Instead, rely on game logic or just invoke the callback.
+
+                // Let's call game.onPlayerHit if it exists, or just Game Over
+                if (this.game.collision) {
+                    this.game.collision.handleCollision(); // Re-use existing collision logic
+                }
+
+                this.scene.remove(bullet);
+                this.enemyProjectiles.splice(i, 1);
+                continue;
+            }
+
+            // Remove if expired
+            if (bullet.userData.lifetime <= 0) {
+                this.scene.remove(bullet);
+                this.enemyProjectiles.splice(i, 1);
+            }
         }
     }
 
@@ -204,7 +303,7 @@ export class PlatformManager {
                     soldierClone.rotation.y = Math.PI; // Face camera
 
                     platform.add(soldierClone);
-                    soldierClone.userData = { health: 11, maxHealth: 11 }; // Default soldier health
+                    soldierClone.userData = { health: 11, maxHealth: 11, lastShotTime: 0 }; // Default soldier health and shooting stats
 
                     // Create Health Bar
                     const barWidth = 1.0;
@@ -270,6 +369,13 @@ export class PlatformManager {
         for (let i = this.active.length - 1; i >= 0; i--) {
             this.recycle(this.active[i], i);
         }
+
+        // Clear enemy projectiles
+        for (const proj of this.enemyProjectiles) {
+            this.scene.remove(proj);
+        }
+        this.enemyProjectiles = [];
+
         this.timeSinceLastSpawn = 0;
     }
 }

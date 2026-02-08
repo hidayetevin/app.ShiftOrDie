@@ -87,7 +87,9 @@ export class UIManager {
                 return;
             }
             const scoreEl = document.getElementById('hud-score');
-            if (scoreEl) scoreEl.innerText = this.game.score.getFinalScore().toLocaleString();
+            if (scoreEl) {
+                scoreEl.innerHTML = `🪙 ${this.game.progression.coinsEarnedThisRun}`;
+            }
 
             const ruleTextEl = document.getElementById('rule-text');
             if (ruleTextEl) ruleTextEl.innerText = this.game.rule.currentRule.label;

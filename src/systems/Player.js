@@ -19,6 +19,7 @@ export class Player {
         this.game = null;
         this.currentAnimation = 'stand';
         this.projectiles = []; // Track active projectiles
+        this.killCount = 0; // Track soldier kills for coin rewards
 
         this.init();
     }
@@ -107,6 +108,7 @@ export class Player {
         // Clear projectiles
         this.projectiles.forEach(proj => this.scene.remove(proj));
         this.projectiles = [];
+        this.killCount = 0; // Reset kill count
 
         // Reset animation
         if (this.isLoaded) {
@@ -207,7 +209,15 @@ export class Player {
                                 platform.userData.soldierObstacle = null;
                                 platform.userData.hasJumpableObstacle = false;
 
-                                // Add score/coins for kill? (Implemented in GameLoop usually, or emit event)
+                                // Coin Reward Logic
+                                this.killCount++;
+                                if (this.killCount % 3 === 0) {
+                                    if (this.game && this.game.progression) {
+                                        this.game.progression.addCoin(1);
+                                        console.log('🪙 Coin awarded for 3 kills!');
+                                        // Optional: Float coin text or sound
+                                    }
+                                }
                             } else {
                                 console.log(`💥 Soldier Hit! HP: ${soldier.userData.health}`);
                                 // Hit effect (smaller)

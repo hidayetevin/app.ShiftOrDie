@@ -4,6 +4,17 @@ export class ProgressionManager {
     constructor() {
         this.data = this.loadData();
         this.initTasks();
+        this.coinsEarnedThisRun = 0;
+    }
+
+    resetRun() {
+        this.coinsEarnedThisRun = 0;
+    }
+
+    addCoin(amount = 1) {
+        this.coinsEarnedThisRun += amount;
+        this.data.total_coins += amount;
+        this.saveData();
     }
 
     loadData() {

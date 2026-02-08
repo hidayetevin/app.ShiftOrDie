@@ -97,6 +97,7 @@ class Game {
         this.score = new ScoreManager();
         this.rule = new RuleManager();
         this.platform = new PlatformManager(this.scene, this.rule);
+        this.platform.setGame(this);
         this.collision = new CollisionDetector(this.player, this.platform, this); // Pass game instance
         this.progression = new ProgressionManager();
         this.vfx = new ParticleSystem(this.scene);
@@ -136,6 +137,7 @@ class Game {
         this.score.reset();
         this.platform.reset();
         this.ads.reset();
+        this.progression.resetRun(); // Reset daily coin count for this run
         this.collision.isDead = false; // Reset death flag
         this.clock.stop();
         this.clock.start();
