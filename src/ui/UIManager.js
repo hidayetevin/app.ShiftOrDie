@@ -1,6 +1,7 @@
 import { gameState, GameStates } from '../core/GameState';
 import { CONFIG } from '../core/Config';
 import { i18n } from '../systems/I18n';
+import { MarketModal } from './MarketModal';
 
 export class UIManager {
     constructor(game) {
@@ -52,7 +53,7 @@ export class UIManager {
             <div class="menu-buttons">
                 <button id="btn-play" class="btn-main">${i18n.t('menu.play')}</button>
                 <button id="btn-tasks">${i18n.t('menu.daily_tasks')}</button>
-                <button id="btn-styles">${i18n.t('menu.style')}</button>
+                <button id="btn-market">Market</button>
                 <button id="btn-settings">${i18n.t('menu.settings')}</button>
             </div>
         `;
@@ -61,7 +62,7 @@ export class UIManager {
         document.getElementById('btn-play').onclick = () => gameState.transition(GameStates.PLAYING);
         document.getElementById('btn-tasks').onclick = () => this.renderTasks();
         document.getElementById('btn-settings').onclick = () => this.renderSettings();
-        document.getElementById('btn-styles').onclick = () => this.renderStyles();
+        document.getElementById('btn-market').onclick = () => new MarketModal(this.game);
     }
 
     renderHUD() {

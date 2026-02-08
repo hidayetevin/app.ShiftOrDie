@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { MD2Character } from 'three/examples/jsm/misc/MD2Character.js';
 import { gsap } from 'gsap';
 import { CONFIG } from '../core/Config';
+import { marketManager } from './MarketManager';
+import { SKIN_CONFIG, WEAPON_CONFIG, getWeaponById } from './WeaponConfig';
 
 export class Player {
     constructor(scene) {
@@ -32,13 +34,15 @@ export class Player {
         this.scene.add(this.mesh);
 
         // MD2 Character Configuration
+        // Dynamic config from WeaponConfig and SkinConfig
+        const skinTextures = SKIN_CONFIG.map(s => s.texture);
+        const weaponAssets = WEAPON_CONFIG.map(w => [w.model + '.md2', w.model + '.png']); // [model, texture]
+
         const config = {
             baseUrl: 'models/md2/ratamahatta/',
-            body: 'ratamahatta.md2',
-            skins: ['ratamahatta.png'],
-            weapons: [
-                ['w_glauncher.md2', 'w_glauncher.png']  // [model, texture] format
-            ]
+            body: 'ratamahatta.md2', // Base model is always ratamahatta for now
+            skins: skinTextures,
+            weapons: weaponAssets
         };
 
         this.character = new MD2Character();
@@ -51,8 +55,14 @@ export class Player {
             this.character.root.rotation.y = 0; // Face away from camera
             this.mesh.add(this.character.root);
 
-            // Set initial skin
-            this.character.setSkin(0);
+            // Set initial skin from MarketManager
+            const savedSkinId = marketManager.getSelectedSkin();
+            const skinIndex = marketManager.getSkinIndex(savedSkinId);
+            if (skinIndex >= 0) {
+                this.character.setSkin(skinIndex);
+            } else {
+                this.character.setSkin(0); // Fallback
+            }
 
             // Log available animations
             const animations = this.character.meshBody.geometry.animations;
@@ -67,8 +77,15 @@ export class Player {
             // Equip weapon after a short delay (weapon loads asynchronously)
             setTimeout(() => {
                 if (this.character.weapons && this.character.weapons.length > 0) {
-                    this.character.setWeapon(0);
-                    console.log('🔫 Grenade Launcher equipped!');
+                    const savedWeaponId = marketManager.getSelectedWeapon();
+                    const weaponIndex = marketManager.getWeaponIndex(savedWeaponId);
+
+                    if (weaponIndex >= 0) {
+                        this.character.setWeapon(weaponIndex);
+                        console.log(`🔫 Weapon equipped: ${savedWeaponId}`);
+                    } else {
+                        this.character.setWeapon(0);
+                    }
                 } else {
                     console.warn('⚠️ No weapons loaded yet');
                 }
@@ -168,20 +185,38 @@ export class Player {
                         // Simple distance check
                         const distance = proj.position.distanceTo(soldierWorldPos);
                         if (distance < 1.5) { // Hit radius
-                            // KILL SOLDIER!
-                            console.log('💥 SOLDIER HIT!');
-
-                            // Explosion effect
-                            if (vfx) {
-                                vfx.emitBurst(soldierWorldPos, 0xff0000, 30, 0.3);
+                            // Apply damage
+                            if (soldier.userData && soldier.userData.health !== undefined) {
+                                soldier.userData.health -= (proj.damage || 1);
+                            } else {
+                                // Fallback if no health defined
+                                soldier.userData = { health: 0 };
                             }
 
-                            // Remove soldier from platform
-                            platform.remove(soldier);
-                            platform.userData.soldierObstacle = null;
-                            platform.userData.hasJumpableObstacle = false;
+                            if (soldier.userData.health <= 0) {
+                                // KILL SOLDIER!
+                                console.log('💥 SOLDIER ELIMINATED!');
 
-                            hitSoldier = true;
+                                // Explosion effect
+                                if (vfx) {
+                                    vfx.emitBurst(soldierWorldPos, 0xff0000, 30, 0.3);
+                                }
+
+                                // Remove soldier from platform
+                                platform.remove(soldier);
+                                platform.userData.soldierObstacle = null;
+                                platform.userData.hasJumpableObstacle = false;
+
+                                // Add score/coins for kill? (Implemented in GameLoop usually, or emit event)
+                            } else {
+                                console.log(`💥 Soldier Hit! HP: ${soldier.userData.health}`);
+                                // Hit effect (smaller)
+                                if (vfx) {
+                                    vfx.emitBurst(soldierWorldPos, 0xffaa00, 10, 0.1);
+                                }
+                            }
+
+                            hitSoldier = true; // Projectile hits something
                             break;
                         }
                     }
@@ -295,11 +330,14 @@ export class Player {
         // Don't change animation - keep running while shooting
 
         // Muzzle flash effect
+        const weaponId = marketManager.getSelectedWeapon();
+        const weaponStats = getWeaponById(weaponId);
+
         if (vfx && this.character.meshWeapon) {
             const weaponPos = this.mesh.position.clone();
             weaponPos.y += 1.2; // Height of weapon
             weaponPos.z += 0.5; // In front of player
-            vfx.emitBurst(weaponPos, 0xff6600, 12, 0.2); // Orange muzzle flash
+            vfx.emitBurst(weaponPos, weaponStats ? weaponStats.color : 0xff6600, 12, 0.2); // Weapon color flash
 
             // Create fireball projectile
             const projectile = this.createFireball(weaponPos);
@@ -314,11 +352,22 @@ export class Player {
     }
 
     createFireball(position) {
+        // Get current weapon stats
+        const weaponId = marketManager.getSelectedWeapon();
+        const weaponStats = getWeaponById(weaponId) || WEAPON_CONFIG[0];
+
         // Create glowing fireball
-        const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        let geometry;
+        if (weaponStats.type === 'laser') {
+            geometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8, 1);
+            geometry.rotateX(Math.PI / 2); // Rotate to face forward
+        } else {
+            geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        }
+
         const material = new THREE.MeshStandardMaterial({
-            color: 0xff4400,
-            emissive: 0xff3300,
+            color: weaponStats.color,
+            emissive: weaponStats.color,
             emissiveIntensity: 2.0,
             roughness: 0.3,
             metalness: 0.1
@@ -328,11 +377,12 @@ export class Player {
         fireball.position.copy(position);
 
         // Add point light for glow effect
-        const light = new THREE.PointLight(0xff4400, 2, 3);
+        const light = new THREE.PointLight(weaponStats.color, 2, 3);
         fireball.add(light);
 
         // Custom properties
-        fireball.speed = 25; // Units per second
+        fireball.speed = weaponStats.type === 'laser' ? 35 : 25; // Lasers are faster
+        fireball.damage = weaponStats.damage; // Store damage on projectile
         fireball.distanceTraveled = 0;
 
         return fireball;

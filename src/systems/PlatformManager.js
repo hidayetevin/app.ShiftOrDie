@@ -204,6 +204,7 @@ export class PlatformManager {
                     soldierClone.rotation.y = Math.PI; // Face camera
 
                     platform.add(soldierClone);
+                    soldierClone.userData = { health: 11 }; // Default soldier health
                     platform.userData.soldierObstacle = soldierClone;
 
                     console.log('🎖️ Soldier obstacle spawned at Z:', platform.position.z.toFixed(1));
