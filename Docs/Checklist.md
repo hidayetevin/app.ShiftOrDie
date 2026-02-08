@@ -30,17 +30,32 @@ Based on **prompts_FINAL_COMPLETE.md**, here is the final progress report:
 - [x] **Running Effects**: Speed trails, footstep particles, camera shake
 - [x] **Procedural VFX**: Death burst, perfect shift feedback, lane switch effects
 
+## Environment System
+- [x] **Dungeon Corridor**: Textured walls, floor, and ceiling
+- [x] **Scrolling Floor**: Animated texture for movement illusion
+- [x] **Wall Decorations**: Random stacked cubes on corridor walls
+- [x] **Atmospheric Lighting**: Torch-like point lights along corridor
+- [x] **Performance Optimized**: GPU-friendly lighting system
+
 ## Obstacle System
 - [x] **Textured Obstacles**: Crate.gif texture from Three.js examples
 - [x] **Dynamic Stacking**: Random 1-3 cube height variations
 - [x] **Visual Consistency**: MeshBasicMaterial for proper texture rendering
 - [x] **Performance**: Object pooling system for cubes
+- [x] **Clean Layout**: Hidden safe platforms, obstacles only
 
 ## Input System
 - [x] **Swipe Controls**: Touch-based gesture recognition
 - [x] **Directional Movement**: Left/right swipe for lane switching
+- [x] **Jump Mechanic**: Upward swipe to jump
 - [x] **Desktop Support**: Mouse drag support for testing
 - [x] **Edge Detection**: Prevents movement beyond lane boundaries
+
+## Character Movement
+- [x] **Diagonal Lane Switch**: Character leans into direction while changing lanes
+- [x] **Smooth Rotation**: GSAP timeline animations for natural turning
+- [x] **Jump Animation**: Arc-based vertical movement with landing
+- [x] **Jump Protection**: Prevents double-jumping while airborne
 
 ## Asset Ready (Hooks & Logic Integrated)
 - [x] **PROMPT 17 – CHARACTER LOGIC**: GLTFLoader integration with full animation system

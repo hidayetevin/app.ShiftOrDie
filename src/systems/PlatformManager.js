@@ -128,8 +128,8 @@ export class PlatformManager {
 
             // Show/hide base platform
             if (platform.userData.baseMesh) {
-                platform.userData.baseMesh.visible = !isDangerous;
-                platform.userData.baseMesh.material.color.setHex(isDangerous ? 0xff0000 : 0x00ff00);
+                // Hide safe platforms completely - only show obstacles
+                platform.userData.baseMesh.visible = false;
             }
 
             platform.position.set(
