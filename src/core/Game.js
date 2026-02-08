@@ -44,6 +44,7 @@ class Game {
         this.environment = null; // New environment system
 
         this.currentSpeed = CONFIG.DIFFICULTY.SPEED.BASE;
+        this.speedMultiplier = 1.0; // Added for jump dash effect
         this.onboardingActive = false;
 
         this.init();
@@ -91,6 +92,7 @@ class Game {
 
         // Systems Initialization
         this.player = new Player(this.scene);
+        this.player.setGame(this); // Inject game reference for speed control
         this.input = new InputManager(this.player, this);
         this.score = new ScoreManager();
         this.rule = new RuleManager();
@@ -136,6 +138,7 @@ class Game {
         this.ads.reset();
         this.clock.stop();
         this.clock.start();
+        this.speedMultiplier = 1.0; // Reset multiplier
 
         if (!this.progression.data.has_played) {
             this.onboardingActive = true;
@@ -178,13 +181,17 @@ class Game {
     update(deltaTime) {
         if (gameState.currentState === GameStates.PLAYING) {
             this.updateDifficulty();
+
+            // Calculate effective speed with multiplier (for jump dash effect)
+            const effectiveSpeed = this.currentSpeed * (this.speedMultiplier || 1.0);
+
             this.score.update(deltaTime);
             this.rule.update(this.score.timeSurvived);
-            this.platform.update(deltaTime, this.currentSpeed);
+            this.platform.update(deltaTime, effectiveSpeed); // Use effective speed
             this.collision.update();
             this.vfx.update(deltaTime);
-            this.environment.update(deltaTime, this.currentSpeed);
-            this.player.update(deltaTime, this.currentSpeed, this.vfx, true);
+            this.environment.update(deltaTime, effectiveSpeed); // Use effective speed
+            this.player.update(deltaTime, effectiveSpeed, this.vfx, true); // Use effective speed
 
             // Dynamic camera tracking with speed-based smoothing
             const smoothFactor = this.currentSpeed > 10 ? 0.15 : 0.1;

@@ -14,8 +14,13 @@ export class Player {
         this.invulnerable = false;
         this.isLoaded = false;
         this.isJumping = false; // Track jump state
+        this.game = null; // Reference to game for speed control
 
         this.init();
+    }
+
+    setGame(game) {
+        this.game = game;
     }
 
     init() {
@@ -258,22 +263,36 @@ export class Player {
         this.isJumping = true;
         const jumpHeight = 1.5;
         const jumpDuration = 0.4;
+        const speedBoost = 2.5; // Multiply environment speed during jump
 
-        // Jump up and down
-        gsap.timeline()
-            .to(this.mesh.position, {
-                y: jumpHeight,
-                duration: jumpDuration / 2,
-                ease: 'power2.out'
-            })
-            .to(this.mesh.position, {
-                y: 0,
-                duration: jumpDuration / 2,
-                ease: 'power2.in',
-                onComplete: () => {
-                    this.isJumping = false;
+        // Boost environment speed during jump
+        if (this.game) {
+            this.game.speedMultiplier = speedBoost;
+        }
+
+        // Jump arc: up then down (vertical only, no Z movement)
+        const jumpTimeline = gsap.timeline();
+
+        // Jump up
+        jumpTimeline.to(this.mesh.position, {
+            y: jumpHeight,
+            duration: jumpDuration / 2,
+            ease: 'power2.out'
+        });
+
+        // Land down
+        jumpTimeline.to(this.mesh.position, {
+            y: 0,
+            duration: jumpDuration / 2,
+            ease: 'power2.in',
+            onComplete: () => {
+                this.isJumping = false;
+                // Reset speed to normal
+                if (this.game) {
+                    this.game.speedMultiplier = 1.0;
                 }
-            });
+            }
+        });
 
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ff00, 8);
     }
