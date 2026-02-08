@@ -16,12 +16,12 @@ export class CollisionDetector {
         if (gameState.currentState !== GameStates.PLAYING) return;
         if (this.player.invulnerable) return;
 
-        this.playerBox.setFromObject(this.player.mesh);
-
-        // Manual Hitbox Tuning:
-        // The MD2 model might have a large bounding box (especially with animations).
-        // We shrink it significantly to represent the "core" of the body.
-        this.playerBox.expandByScalar(-1.5);
+        // Manual Hitbox:
+        // Create a fixed-size box at player position instead of relying on mesh scale
+        const center = this.player.mesh.position.clone();
+        center.y += 1.0; // Raise center to mid-body
+        const size = new THREE.Vector3(0.6, 2.0, 0.6); // Width, Height, Depth
+        this.playerBox.setFromCenterAndSize(center, size);
 
         const activePlatforms = this.platformManager.active;
         for (const platform of activePlatforms) {
