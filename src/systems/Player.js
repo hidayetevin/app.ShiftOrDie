@@ -263,7 +263,7 @@ export class Player {
         this.isJumping = true;
         const jumpHeight = 1.5;
         const jumpDuration = 0.4;
-        const speedBoost = 2.5; // Multiply environment speed during jump
+        const speedBoost = 1.75; // Multiply environment speed during jump
 
         // Boost environment speed during jump
         if (this.game) {
