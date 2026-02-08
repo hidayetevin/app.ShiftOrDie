@@ -27,7 +27,7 @@ export const CONFIG = {
             MAX: 15
         },
         RULE_CHANGE: [
-            { time: 0,  interval: 5.0 },
+            { time: 0, interval: 5.0 },
             { time: 10, interval: 4.0 },
             { time: 20, interval: 3.0 },
             { time: 30, interval: 2.5 }

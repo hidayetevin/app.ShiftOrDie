@@ -197,10 +197,7 @@ class Game {
             const smoothFactor = this.currentSpeed > 10 ? 0.15 : 0.1;
             this.camera.position.x += (this.player.mesh.position.x - this.camera.position.x) * smoothFactor;
 
-            // Camera shake effect when running fast
-            if (this.currentSpeed > 12) {
-                this.camera.position.y += Math.sin(Date.now() * 0.01) * 0.02;
-            }
+            // Camera shake removed per user request
 
             this.progression.updateTaskProgress('survival', this.score.timeSurvived);
         }
