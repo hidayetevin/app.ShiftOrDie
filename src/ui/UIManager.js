@@ -72,7 +72,7 @@ export class UIManager {
             <div class="hud-top">
                 <span id="hud-score">0</span>
                 <div class="hud-health">
-                    <span id="health-text">10</span>
+                    <span id="health-text">❤️ 10</span>
                     <div class="health-bar-container">
                         <div id="health-bar-fill" class="fill"></div>
                     </div>
@@ -317,7 +317,7 @@ export class UIManager {
         const healthText = document.getElementById('health-text');
         const healthFill = document.getElementById('health-bar-fill');
 
-        if (healthText) healthText.innerText = current; // Display current health (e.g. 10)
+        if (healthText) healthText.innerText = `❤️ ${current}`; // Display current health with heart
         if (healthFill) {
             const percent = Math.max(0, (current / max) * 100);
             healthFill.style.width = `${percent}%`;
