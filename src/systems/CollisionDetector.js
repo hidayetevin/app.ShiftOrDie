@@ -121,6 +121,6 @@ export class CollisionDetector {
         // After animation, show game over
         setTimeout(() => {
             gameState.transition(GameStates.GAMEOVER);
-        }, 1000); // 1 second for death animation
+        }, 500); // 1 second for death animation
     }
 }

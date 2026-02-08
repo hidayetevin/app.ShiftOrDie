@@ -366,7 +366,7 @@ export class Player {
 
         // Optional: Add dramatic effect
         if (this.game && this.game.vfx) {
-            this.game.vfx.emitBurst(this.mesh.position, 0xff0000, 40, 0.5);
+            this.game.vfx.emitBurst(this.mesh.position, 0xff0000, 40, 0.3);
         }
     }
 
