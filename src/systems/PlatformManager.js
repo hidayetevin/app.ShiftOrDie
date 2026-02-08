@@ -47,26 +47,30 @@ export class PlatformManager {
 
             // Obstacle cubes (using textured material like HTML example)
             const cubes = [];
-            const numCubes = 4; // 4 cubes in a row
-            const spacing = CONFIG.PLATFORM.LENGTH / (numCubes + 1);
+            const numPositions = 4; // 4 positions along the platform
+            const spacing = CONFIG.PLATFORM.LENGTH / (numPositions + 1);
 
-            for (let j = 0; j < numCubes; j++) {
-                // Use MeshBasicMaterial with texture (from cube HTML example)
-                const cubeMat = new THREE.MeshBasicMaterial({ map: crateTexture });
-                const cube = new THREE.Mesh(cubeGeometry, cubeMat);
-                cube.castShadow = true;
-                cube.receiveShadow = true;
+            for (let j = 0; j < numPositions; j++) {
+                // Random stack height (1, 2, or 3 cubes high)
+                const stackHeight = Math.floor(Math.random() * 3) + 1;
 
-                // Position cubes along the platform (Z-axis), not stacked
-                cube.position.y = cubeSize / 2; // Just above ground
-                cube.position.z = -CONFIG.PLATFORM.LENGTH / 2 + spacing * (j + 1);
-                cube.position.x = 0; // Centered on lane
+                for (let k = 0; k < stackHeight; k++) {
+                    const cubeMat = new THREE.MeshBasicMaterial({ map: crateTexture });
+                    const cube = new THREE.Mesh(cubeGeometry, cubeMat);
+                    cube.castShadow = true;
+                    cube.receiveShadow = true;
 
-                // Static cubes - no rotation
-                cube.rotation.set(0, 0, 0);
+                    // Position: horizontal (j), vertical stack (k)
+                    cube.position.x = 0;
+                    cube.position.y = (cubeSize / 2) + (k * cubeSize);
+                    cube.position.z = -CONFIG.PLATFORM.LENGTH / 2 + spacing * (j + 1);
 
-                cubes.push(cube);
-                platformGroup.add(cube);
+                    // Static cubes - no rotation
+                    cube.rotation.set(0, 0, 0);
+
+                    cubes.push(cube);
+                    platformGroup.add(cube);
+                }
             }
 
             platformGroup.visible = false;
