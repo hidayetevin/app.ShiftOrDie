@@ -17,6 +17,11 @@ export class CollisionDetector {
 
         this.playerBox.setFromObject(this.player.mesh);
 
+        // Manual Hitbox Tuning:
+        // The MD2 model might have a large bounding box (especially with animations).
+        // We shrink it significantly to represent the "core" of the body.
+        this.playerBox.expandByScalar(-1.5);
+
         const activePlatforms = this.platformManager.active;
         for (const platform of activePlatforms) {
             // Only check nearby platforms
@@ -32,7 +37,7 @@ export class CollisionDetector {
     }
 
     handleCollision(platform) {
-        // Double check lane (though physics should handle it, this is safer per analysis)
+        // Double check lane
         if (this.player.currentLane !== platform.userData.lane) return;
 
         // Check for dangerous obstacles (red stacked crates)
@@ -45,18 +50,32 @@ export class CollisionDetector {
         if (platform.userData.hasJumpableObstacle && platform.userData.jumpableCube) {
             this.obstacleBox.setFromObject(platform.userData.jumpableCube);
 
-            if (this.playerBox.intersectsBox(this.obstacleBox)) {
+            // Custom intersection check: Require significant overlap
+            const pMin = this.playerBox.min;
+            const pMax = this.playerBox.max;
+            const oMin = this.obstacleBox.min;
+            const oMax = this.obstacleBox.max;
+
+            // Calculate overlap on X and Z axes
+            const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
+            const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
+
+            // Collision Threshold: Objects must overlap by at least 0.3 units
+            const collisionDepth = 0.3;
+
+            if (overlapX > collisionDepth && overlapZ > collisionDepth) {
                 // Check if player is in the air (jumping)
                 const playerHeight = this.player.mesh.position.y;
-                const jumpThreshold = 0.3; // Minimum height to clear obstacle
+                const jumpThreshold = 0.9; // High threshold for clean jumps
 
-                if (playerHeight < jumpThreshold) {
-                    // Player hit obstacle while on ground - DEATH
-                    console.log('💥 Hit jumpable obstacle without jumping!');
-                    this.triggerDeath();
-                } else {
+                if (playerHeight > jumpThreshold) {
                     // Player successfully jumped over obstacle
-                    console.log('✅ Cleared jumpable obstacle!');
+                    console.log(`✅ Cleared jumpable obstacle! PlayerY: ${playerHeight.toFixed(2)} > Threshold: ${jumpThreshold}`);
+                } else {
+                    // Player hit obstacle while on ground - DEATH
+                    console.warn(`💀 DEATH BY OBSTACLE: PlayerY: ${playerHeight.toFixed(2)} <= Threshold: ${jumpThreshold}`);
+                    console.log('JumpState:', this.player.isJumping);
+                    this.triggerDeath();
                 }
             }
         }

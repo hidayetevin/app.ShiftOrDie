@@ -32,7 +32,7 @@ export class PlatformManager {
         const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
         // Create smaller cube for jumpable obstacles (gray crates on safe lanes)
-        const jumpableSize = 0.5;
+        const jumpableSize = cubeSize; // Same size as regular cubes
         const jumpableGeometry = new THREE.BoxGeometry(jumpableSize, jumpableSize, jumpableSize);
 
         for (let i = 0; i < CONFIG.PLATFORM.POOL_SIZE; i++) {
@@ -129,14 +129,23 @@ export class PlatformManager {
     spawnRow() {
         // Spawn one row (3 platforms)
         for (let i = 0; i < CONFIG.LANE.COUNT; i++) {
+            if (this.pool.length === 0) {
+                console.warn('Pool exhausted!');
+                return;
+            }
             const platform = this.pool.pop();
-            if (!platform) continue;
 
             const status = this.ruleManager.getLaneStatus(i);
             const isDangerous = (status === 'hazard');
 
             platform.userData.isDangerous = isDangerous;
             platform.userData.lane = i;
+
+            // Reset Jumpable Cube Visibility (Important!)
+            if (platform.userData.jumpableCube) {
+                platform.userData.jumpableCube.visible = false;
+            }
+            platform.userData.hasJumpableObstacle = false;
 
             // Show/hide cubes based on danger
             if (platform.userData.cubes) {

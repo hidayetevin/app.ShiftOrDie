@@ -168,6 +168,10 @@ export class Player {
 
         const jumpTimeline = gsap.timeline();
 
+        if (this.game) {
+            this.game.speedMultiplier = 2.0; // Increased forward thrust for longer jumps
+        }
+
         jumpTimeline.to(this.mesh.position, {
             y: jumpHeight,
             duration: jumpDuration / 2,
@@ -180,6 +184,9 @@ export class Player {
             ease: 'power2.in',
             onComplete: () => {
                 this.isJumping = false;
+                if (this.game) {
+                    this.game.speedMultiplier = 1.0; // Reset speed
+                }
                 this.setAnimation('run'); // Return to run
             }
         });
