@@ -15,6 +15,7 @@ export class Player {
         this.isShooting = false;
         this.game = null;
         this.currentAnimation = 'stand';
+        this.projectiles = []; // Track active projectiles
 
         this.init();
     }
@@ -116,6 +117,30 @@ export class Player {
             // Not playing -> Stand
             if (this.currentAnimation !== 'stand') {
                 this.setAnimation('stand');
+            }
+        }
+
+        // Update projectiles
+        this.updateProjectiles(deltaTime, speed, vfx);
+    }
+
+    updateProjectiles(deltaTime, gameSpeed, vfx) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const proj = this.projectiles[i];
+
+            // Move projectile forward (in world space, independent of game speed)
+            proj.position.z += proj.speed * deltaTime;
+
+            // Add trail effect
+            if (vfx && Math.random() < 0.5) {
+                vfx.emitBurst(proj.position, 0xff3300, 2, 0.1);
+            }
+
+            // Remove if traveled too far
+            proj.distanceTraveled += proj.speed * deltaTime;
+            if (proj.distanceTraveled > 50 || proj.position.z < -30) {
+                this.scene.remove(proj);
+                this.projectiles.splice(i, 1);
             }
         }
     }
@@ -222,8 +247,13 @@ export class Player {
         if (vfx && this.character.meshWeapon) {
             const weaponPos = this.mesh.position.clone();
             weaponPos.y += 1.2; // Height of weapon
-            weaponPos.z -= 0.5; // In front of player
+            weaponPos.z += 0.5; // In front of player
             vfx.emitBurst(weaponPos, 0xff6600, 12, 0.2); // Orange muzzle flash
+
+            // Create fireball projectile
+            const projectile = this.createFireball(weaponPos);
+            this.scene.add(projectile);
+            this.projectiles.push(projectile);
         }
 
         // Return to previous animation after attack
@@ -233,6 +263,31 @@ export class Player {
                 this.setAnimation(previousAnimation);
             }
         }, 500); // Attack animation duration
+    }
+
+    createFireball(position) {
+        // Create glowing fireball
+        const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xff4400,
+            emissive: 0xff3300,
+            emissiveIntensity: 2.0,
+            roughness: 0.3,
+            metalness: 0.1
+        });
+
+        const fireball = new THREE.Mesh(geometry, material);
+        fireball.position.copy(position);
+
+        // Add point light for glow effect
+        const light = new THREE.PointLight(0xff4400, 2, 3);
+        fireball.add(light);
+
+        // Custom properties
+        fireball.speed = 25; // Units per second
+        fireball.distanceTraveled = 0;
+
+        return fireball;
     }
 
     setInvulnerable(duration) {
