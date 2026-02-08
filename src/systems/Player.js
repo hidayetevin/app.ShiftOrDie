@@ -426,10 +426,5 @@ export class Player {
         }, duration);
     }
 
-    reset() {
-        this.currentLane = 1;
-        this.mesh.position.set(CONFIG.LANE.POSITIONS[this.currentLane], 0, 0);
-        this.invulnerable = false;
-        this.setAnimation('stand');
-    }
+
 }
