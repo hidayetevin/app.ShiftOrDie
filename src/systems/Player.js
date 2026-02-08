@@ -13,6 +13,7 @@ export class Player {
         this.currentLane = 1;
         this.invulnerable = false;
         this.isLoaded = false;
+        this.isJumping = false; // Track jump state
 
         this.init();
     }
@@ -248,6 +249,33 @@ export class Player {
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ffff, 5);
 
         return true; // Movement successful
+    }
+
+    jump(vfx) {
+        // Prevent jumping if already in air or during lane switch
+        if (this.isJumping) return;
+
+        this.isJumping = true;
+        const jumpHeight = 1.5;
+        const jumpDuration = 0.4;
+
+        // Jump up and down
+        gsap.timeline()
+            .to(this.mesh.position, {
+                y: jumpHeight,
+                duration: jumpDuration / 2,
+                ease: 'power2.out'
+            })
+            .to(this.mesh.position, {
+                y: 0,
+                duration: jumpDuration / 2,
+                ease: 'power2.in',
+                onComplete: () => {
+                    this.isJumping = false;
+                }
+            });
+
+        if (vfx) vfx.emitBurst(this.mesh.position, 0x00ff00, 8);
     }
 
     setInvulnerable(duration) {

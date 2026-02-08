@@ -59,14 +59,26 @@ export class InputManager {
         const deltaX = endX - startX;
         const deltaY = endY - startY;
 
-        // Check if horizontal swipe is dominant
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > this.swipeThreshold) {
-            if (deltaX > 0) {
-                // Swipe RIGHT -> Move LEFT (reversed for intuitive feel)
-                this.executeSwitch('left');
-            } else {
-                // Swipe LEFT -> Move RIGHT (reversed for intuitive feel)
-                this.executeSwitch('right');
+        // Check which direction is dominant
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Horizontal swipe (left/right for lane switching)
+            if (Math.abs(deltaX) > this.swipeThreshold) {
+                if (deltaX > 0) {
+                    // Swipe RIGHT -> Move LEFT (reversed for intuitive feel)
+                    this.executeSwitch('left');
+                } else {
+                    // Swipe LEFT -> Move RIGHT (reversed for intuitive feel)
+                    this.executeSwitch('right');
+                }
+            }
+        } else {
+            // Vertical swipe (up for jump)
+            if (Math.abs(deltaY) > this.swipeThreshold) {
+                if (deltaY < 0) {
+                    // Swipe UP -> Jump
+                    this.executeJump();
+                }
+                // Ignore down swipe
             }
         }
     }
@@ -91,5 +103,10 @@ export class InputManager {
                 }
             }
         }
+    }
+
+    executeJump() {
+        this.player.jump(this.game.vfx);
+        this.game.audio.playSFX('shift'); // You can add separate jump sound later
     }
 }
