@@ -204,7 +204,34 @@ export class PlatformManager {
                     soldierClone.rotation.y = Math.PI; // Face camera
 
                     platform.add(soldierClone);
-                    soldierClone.userData = { health: 11 }; // Default soldier health
+                    soldierClone.userData = { health: 11, maxHealth: 11 }; // Default soldier health
+
+                    // Create Health Bar
+                    const barWidth = 1.0;
+                    const barHeight = 0.15;
+                    const healthBarGroup = new THREE.Group();
+                    healthBarGroup.position.set(0, 2.2, 0); // Above soldier head
+
+                    // Background (Black)
+                    const bgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
+                    const bgMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                    const bgMesh = new THREE.Mesh(bgGeo, bgMat);
+
+                    // Kill (Red)
+                    const fgGeo = new THREE.PlaneGeometry(barWidth - 0.05, barHeight - 0.05);
+                    const fgMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                    const fgMesh = new THREE.Mesh(fgGeo, fgMat);
+                    fgMesh.position.z = 0.01; // Slightly in front
+                    // Shift anchor to left for scaling
+                    fgMesh.geometry.translate((barWidth - 0.05) / 2, 0, 0);
+                    fgMesh.position.x = -(barWidth - 0.05) / 2;
+
+                    healthBarGroup.add(bgMesh);
+                    healthBarGroup.add(fgMesh);
+
+                    soldierClone.add(healthBarGroup);
+                    soldierClone.userData.healthBar = fgMesh;
+
                     platform.userData.soldierObstacle = soldierClone;
 
                     console.log('🎖️ Soldier obstacle spawned at Z:', platform.position.z.toFixed(1));

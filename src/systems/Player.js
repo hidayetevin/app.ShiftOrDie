@@ -214,6 +214,13 @@ export class Player {
                                 if (vfx) {
                                     vfx.emitBurst(soldierWorldPos, 0xffaa00, 10, 0.1);
                                 }
+
+                                // Update Health Bar
+                                if (soldier.userData.healthBar) {
+                                    const maxHealth = soldier.userData.maxHealth || 11;
+                                    const healthPercent = Math.max(0, soldier.userData.health / maxHealth);
+                                    soldier.userData.healthBar.scale.x = healthPercent;
+                                }
                             }
 
                             hitSoldier = true; // Projectile hits something
