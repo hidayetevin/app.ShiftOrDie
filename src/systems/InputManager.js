@@ -22,6 +22,11 @@ export class InputManager {
     }
 
     handleTouchStart(e) {
+        // UI Check: Don't capture touch if interacting with UI buttons
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return;
+        }
+
         if (gameState.currentState !== GameStates.PLAYING) return;
         if (e.touches.length > 1) return;
 
@@ -31,6 +36,11 @@ export class InputManager {
     }
 
     handleTouchEnd(e) {
+        // UI Check
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return;
+        }
+
         if (gameState.currentState !== GameStates.PLAYING) return;
 
         e.preventDefault();
@@ -41,6 +51,11 @@ export class InputManager {
     }
 
     handleMouseDown(e) {
+        // UI Check
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return;
+        }
+
         if (gameState.currentState !== GameStates.PLAYING) return;
 
         this.touchStartX = e.clientX;
@@ -48,6 +63,11 @@ export class InputManager {
     }
 
     handleMouseUp(e) {
+        // UI Check
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return;
+        }
+
         if (gameState.currentState !== GameStates.PLAYING) return;
 
         const touchEndX = e.clientX;
