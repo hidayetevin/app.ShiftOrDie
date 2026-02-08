@@ -217,12 +217,33 @@ export class Player {
         }
 
         this.currentLane = newLane;
+        const duration = CONFIG.PLAYER.SWITCH_DURATION;
 
+        // Diagonal rotation (model base is already Math.PI)
+        // Larger angle for more visible diagonal movement
+        // REVERSED: Right swipe = turn left, Left swipe = turn right (for correct diagonal)
+        const diagonalRotation = direction === 'left' ? -1.0 : 1.0; // ~57 degrees
+        const forwardRotation = 0;
+
+        // Animate position
         gsap.to(this.mesh.position, {
             x: CONFIG.LANE.POSITIONS[this.currentLane],
-            duration: CONFIG.PLAYER.SWITCH_DURATION,
+            duration: duration,
             ease: 'power2.out'
         });
+
+        // Animate rotation: face diagonal during movement, return to forward after
+        gsap.timeline()
+            .to(this.mesh.rotation, {
+                y: diagonalRotation,
+                duration: duration * 0.6,
+                ease: 'power2.out'
+            })
+            .to(this.mesh.rotation, {
+                y: forwardRotation,
+                duration: duration * 0.4,
+                ease: 'power2.in'
+            });
 
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ffff, 5);
 
