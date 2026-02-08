@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { CONFIG } from '../core/Config';
 
 export class PlatformManager {
@@ -9,8 +11,21 @@ export class PlatformManager {
         this.active = [];
         this.lastSpawnZ = CONFIG.PLATFORM.SPAWN_DISTANCE;
         this.timeSinceLastSpawn = 0;
+        this.soldierModel = null; // Will store cloneable soldier model
 
+        this.loadSoldierModel();
         this.initPool();
+    }
+
+    loadSoldierModel() {
+        const loader = new GLTFLoader();
+        loader.load('/models/gltf/Soldier.glb', (gltf) => {
+            this.soldierModel = gltf.scene;
+            this.soldierModel.scale.set(1.2, 1.2, 1.2); // 3x larger
+            console.log('✅ Soldier obstacle model loaded');
+        }, undefined, (error) => {
+            console.error('❌ Error loading Soldier model:', error);
+        });
     }
 
     initPool() {
@@ -97,6 +112,7 @@ export class PlatformManager {
                 baseMesh: baseMesh,
                 cubes: cubes,
                 jumpableCube: jumpableCube,
+                soldierObstacle: null, // Will hold cloned Soldier model
                 hasJumpableObstacle: false
             };
 
@@ -135,6 +151,13 @@ export class PlatformManager {
             }
             const platform = this.pool.pop();
 
+            // SET POSITION FIRST (before adding obstacles!)
+            platform.position.set(
+                CONFIG.LANE.POSITIONS[i],
+                0,
+                CONFIG.PLATFORM.SPAWN_DISTANCE + 10
+            );
+
             const status = this.ruleManager.getLaneStatus(i);
             const isDangerous = (status === 'hazard');
 
@@ -156,11 +179,44 @@ export class PlatformManager {
 
             // Jumpable obstacles ONLY on SAFE lanes (40% chance)
             platform.userData.hasJumpableObstacle = false;
-            if (platform.userData.jumpableCube) {
-                if (!isDangerous && Math.random() < 0.4) {
-                    platform.userData.jumpableCube.visible = true;
-                    platform.userData.hasJumpableObstacle = true;
+
+            // Clean up old soldier obstacle if exists
+            if (platform.userData.soldierObstacle) {
+                platform.remove(platform.userData.soldierObstacle);
+                platform.userData.soldierObstacle = null;
+            }
+
+            if (!isDangerous && Math.random() < 0.4) {
+                platform.userData.hasJumpableObstacle = true;
+
+                // Randomly choose: 50% soldier, 50% gray cube
+                const useSoldier = this.soldierModel && Math.random() < 0.5;
+
+                if (useSoldier) {
+                    // Hide gray cube geometry, show soldier visual instead
+                    if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
+                        platform.userData.jumpableCube.visible = false;
+                    }
+
+                    // Clone soldier properly (SkeletonUtils for animated models)
+                    const soldierClone = SkeletonUtils.clone(this.soldierModel);
+                    soldierClone.position.set(0, 0, 0); // At platform origin
+                    soldierClone.rotation.y = Math.PI; // Face camera
+
+                    platform.add(soldierClone);
+                    platform.userData.soldierObstacle = soldierClone;
+
+                    console.log('🎖️ Soldier obstacle spawned at Z:', platform.position.z.toFixed(1));
                 } else {
+                    // Show gray cube
+                    if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
+                        platform.userData.jumpableCube.visible = true;
+                        console.log('📦 Cube at Z:', platform.position.z.toFixed(1));
+                    }
+                }
+            } else {
+                // No obstacle
+                if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
                     platform.userData.jumpableCube.visible = false;
                 }
             }
@@ -170,12 +226,6 @@ export class PlatformManager {
                 // Hide safe platforms completely - only show obstacles
                 platform.userData.baseMesh.visible = false;
             }
-
-            platform.position.set(
-                CONFIG.LANE.POSITIONS[i],
-                0,
-                CONFIG.PLATFORM.SPAWN_DISTANCE + 10
-            );
 
             platform.visible = true;
             this.active.push(platform);
