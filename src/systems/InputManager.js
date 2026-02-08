@@ -62,11 +62,11 @@ export class InputManager {
         // Check if horizontal swipe is dominant
         if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > this.swipeThreshold) {
             if (deltaX > 0) {
-                // Swipe RIGHT
-                this.executeSwitch('right');
-            } else {
-                // Swipe LEFT
+                // Swipe RIGHT -> Move LEFT (reversed for intuitive feel)
                 this.executeSwitch('left');
+            } else {
+                // Swipe LEFT -> Move RIGHT (reversed for intuitive feel)
+                this.executeSwitch('right');
             }
         }
     }

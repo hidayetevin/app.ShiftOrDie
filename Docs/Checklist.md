@@ -26,8 +26,21 @@ Based on **prompts_FINAL_COMPLETE.md**, here is the final progress report:
 ## Character & Visuals
 - [x] **3D Character Model**: Professional Soldier.glb model with skeletal animations
 - [x] **Character Animations**: Idle, Walk, Run with smooth transitions
+- [x] **Animation System**: GLTFLoader + AnimationMixer integration
 - [x] **Running Effects**: Speed trails, footstep particles, camera shake
 - [x] **Procedural VFX**: Death burst, perfect shift feedback, lane switch effects
+
+## Obstacle System
+- [x] **Textured Obstacles**: Crate.gif texture from Three.js examples
+- [x] **Dynamic Stacking**: Random 1-3 cube height variations
+- [x] **Visual Consistency**: MeshBasicMaterial for proper texture rendering
+- [x] **Performance**: Object pooling system for cubes
+
+## Input System
+- [x] **Swipe Controls**: Touch-based gesture recognition
+- [x] **Directional Movement**: Left/right swipe for lane switching
+- [x] **Desktop Support**: Mouse drag support for testing
+- [x] **Edge Detection**: Prevents movement beyond lane boundaries
 
 ## Asset Ready (Hooks & Logic Integrated)
 - [x] **PROMPT 17 – CHARACTER LOGIC**: GLTFLoader integration with full animation system
