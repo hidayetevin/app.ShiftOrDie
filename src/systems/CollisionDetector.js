@@ -63,8 +63,14 @@ export class CollisionDetector {
                 const collisionDepth = 0.3;
 
                 if (overlapX > collisionDepth && overlapZ > collisionDepth) {
-                    console.warn('💀 SOLDIER KILLS PLAYER! Must shoot to survive!');
-                    this.triggerDeath();
+                    console.warn('⚠️ SOLDIER COLLISION!');
+                    // Collision with soldier body does usually hurt more?
+                    // Let's make it 3 damage for hitting the soldier body directly
+                    this.player.takeDamage(3);
+
+                    // Also destroy the soldier to prevent sticking/multihit
+                    platform.remove(platform.userData.soldierObstacle);
+                    platform.userData.soldierObstacle = null;
                 }
                 return; // Skip gray cube logic
             }

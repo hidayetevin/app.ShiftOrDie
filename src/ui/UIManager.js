@@ -71,6 +71,12 @@ export class UIManager {
         div.innerHTML = `
             <div class="hud-top">
                 <span id="hud-score">0</span>
+                <div class="hud-health">
+                    <span id="health-text">10</span>
+                    <div class="health-bar-container">
+                        <div id="health-bar-fill" class="fill"></div>
+                    </div>
+                </div>
                 <button id="btn-pause">||</button>
             </div>
             <div id="hud-combo" class="combo-indicator"></div>
@@ -305,5 +311,16 @@ export class UIManager {
             </div>
         `;
         this.root.appendChild(div);
+    }
+
+    updateHealth(current, max) {
+        const healthText = document.getElementById('health-text');
+        const healthFill = document.getElementById('health-bar-fill');
+
+        if (healthText) healthText.innerText = current; // Display current health (e.g. 10)
+        if (healthFill) {
+            const percent = Math.max(0, (current / max) * 100);
+            healthFill.style.width = `${percent}%`;
+        }
     }
 }

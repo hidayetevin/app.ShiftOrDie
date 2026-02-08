@@ -211,22 +211,8 @@ export class PlatformManager {
             if (dist < 0.8 && !this.game.player.isDying && !this.game.player.invulnerable) {
                 console.log('💥 Player Hit by Enemy Bullet!');
 
-                // Trigger Player Death
-                this.game.player.playDeathAnimation();
-
-                // Transition Game State after short delay or immediately?
-                // Let GameLoop handle state transition usually, but here we can trigger it.
-                // Assuming GameLoop checks player state or we call a method on Game.
-
-                // For now, let's just trigger death animation. The collision detection might handle game over.
-                // Or we can manually transition:
-                // import { gameState, GameStates } from '../core/GameState'; // Need to import this at top if used
-                // Instead, rely on game logic or just invoke the callback.
-
-                // Let's call game.onPlayerHit if it exists, or just Game Over
-                if (this.game.collision) {
-                    this.game.collision.handleCollision(); // Re-use existing collision logic
-                }
+                // Damage Player
+                this.game.player.takeDamage(1);
 
                 this.scene.remove(bullet);
                 this.enemyProjectiles.splice(i, 1);

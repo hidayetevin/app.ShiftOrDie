@@ -20,6 +20,8 @@ export class Player {
         this.currentAnimation = 'stand';
         this.projectiles = []; // Track active projectiles
         this.killCount = 0; // Track soldier kills for coin rewards
+        this.health = 10;
+        this.maxHealth = 10;
 
         this.init();
     }
@@ -107,8 +109,11 @@ export class Player {
 
         // Clear projectiles
         this.projectiles.forEach(proj => this.scene.remove(proj));
+        this.projectiles.forEach(proj => this.scene.remove(proj));
         this.projectiles = [];
         this.killCount = 0; // Reset kill count
+        this.health = 10; // Reset health
+        this.maxHealth = 10;
 
         // Reset animation
         if (this.isLoaded) {
@@ -441,6 +446,33 @@ export class Player {
                 this.character.meshBody.material.transparent = false;
             }
         }, duration);
+    }
+
+    takeDamage(amount) {
+        if (this.invulnerable || this.isDying) return;
+
+        this.health -= amount;
+        console.log(`❤️ Player Health: ${this.health}/${this.maxHealth}`);
+
+        // Update UI
+        if (this.game && this.game.ui) {
+            this.game.ui.updateHealth(this.health, this.maxHealth);
+        }
+
+        // Hit effect
+        if (this.game && this.game.vfx) {
+            this.game.vfx.emitBurst(this.mesh.position, 0xff0000, 10, 0.2);
+        }
+
+        if (this.health <= 0) {
+            this.playDeathAnimation();
+            if (this.game && this.game.collision) {
+                this.game.collision.handleCollision();
+            }
+        } else {
+            // Brief invulnerability
+            this.setInvulnerable(1000);
+        }
     }
 
 

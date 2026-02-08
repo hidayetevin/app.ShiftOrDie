@@ -152,6 +152,9 @@ class Game {
             this.onboardingActive = false;
             this.currentSpeed = CONFIG.DIFFICULTY.SPEED.BASE;
         }
+
+        // Sync UI
+        this.ui.updateHealth(this.player.health, this.player.maxHealth);
     }
 
     continueGame() {
