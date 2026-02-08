@@ -58,8 +58,16 @@ export class InputManager {
     detectSwipe(startX, startY, endX, endY) {
         const deltaX = endX - startX;
         const deltaY = endY - startY;
+        const tapThreshold = 10; // Max movement to count as tap
 
-        // Check which direction is dominant
+        // Check if this is a tap (minimal movement)
+        if (Math.abs(deltaX) < tapThreshold && Math.abs(deltaY) < tapThreshold) {
+            // TAP detected -> SHOOT
+            this.executeShoot();
+            return;
+        }
+
+        // Check which direction is dominant (swipe)
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
             // Horizontal swipe (left/right for lane switching)
             if (Math.abs(deltaX) > this.swipeThreshold) {
@@ -108,5 +116,11 @@ export class InputManager {
     executeJump() {
         this.player.jump(this.game.vfx);
         this.game.audio.playSFX('shift'); // You can add separate jump sound later
+    }
+
+    executeShoot() {
+        this.player.shoot(this.game.vfx);
+        this.game.audio.playSFX('shift'); // Can add separate shoot sound later
+        console.log('💥 FIRING!');
     }
 }

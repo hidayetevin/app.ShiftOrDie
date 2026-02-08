@@ -12,6 +12,7 @@ export class Player {
         this.invulnerable = false;
         this.isLoaded = false;
         this.isJumping = false;
+        this.isShooting = false;
         this.game = null;
         this.currentAnimation = 'stand';
 
@@ -205,6 +206,33 @@ export class Player {
         });
 
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ff00, 8);
+    }
+
+    shoot(vfx) {
+        // Cooldown check
+        if (this.isShooting) return;
+
+        this.isShooting = true;
+
+        // Play attack animation
+        const previousAnimation = this.currentAnimation;
+        this.setAnimation('attack');
+
+        // Muzzle flash effect
+        if (vfx && this.character.meshWeapon) {
+            const weaponPos = this.mesh.position.clone();
+            weaponPos.y += 1.2; // Height of weapon
+            weaponPos.z -= 0.5; // In front of player
+            vfx.emitBurst(weaponPos, 0xff6600, 12, 0.2); // Orange muzzle flash
+        }
+
+        // Return to previous animation after attack
+        setTimeout(() => {
+            this.isShooting = false;
+            if (!this.isJumping) {
+                this.setAnimation(previousAnimation);
+            }
+        }, 500); // Attack animation duration
     }
 
     setInvulnerable(duration) {
