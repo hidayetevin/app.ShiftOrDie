@@ -70,7 +70,10 @@ export class UIManager {
         div.className = 'ui-screen hud-screen';
         div.innerHTML = `
             <div class="hud-top">
-                <span id="hud-score">0</span>
+                <div class="hud-info">
+                    <span id="hud-coins">🪙 0</span>
+                    <span id="hud-score-small">0</span>
+                </div>
                 <div class="hud-health">
                     <span id="health-text">❤️ 10</span>
                     <div class="health-bar-container">
@@ -92,9 +95,14 @@ export class UIManager {
                 clearInterval(this.scoreUpdateInterval);
                 return;
             }
-            const scoreEl = document.getElementById('hud-score');
+            const coinsEl = document.getElementById('hud-coins');
+            if (coinsEl) {
+                coinsEl.innerHTML = `🪙 ${this.game.progression.coinsEarnedThisRun}`;
+            }
+
+            const scoreEl = document.getElementById('hud-score-small');
             if (scoreEl) {
-                scoreEl.innerHTML = `🪙 ${this.game.progression.coinsEarnedThisRun}`;
+                scoreEl.innerText = Math.floor(this.game.score.currentScore);
             }
 
             const ruleTextEl = document.getElementById('rule-text');

@@ -21,10 +21,10 @@ export const CONFIG = {
     },
     DIFFICULTY: {
         SPEED: {
-            BASE: 5,
-            INCREMENT: 0.5,
+            BASE: 2.5,
+            INCREMENT: 0.25,
             INTERVAL: 5,
-            MAX: 15
+            MAX: 8
         },
         RULE_CHANGE: [
             { time: 0, interval: 5.0 },

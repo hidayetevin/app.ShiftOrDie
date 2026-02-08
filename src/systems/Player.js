@@ -124,6 +124,22 @@ export class Player {
     update(deltaTime, speed, vfx, isPlaying) {
         if (!this.isLoaded) return;
 
+        // Sync animation speed with game speed
+        // Base speed was roughly 5.0. New base is 2.5.
+        // We want animation to look natural.
+        // If speed is 2.5, timeScale should be ~0.5.
+        // If speed is 5.0, timeScale should be ~1.0.
+        // If speed is 8.0, timeScale should be ~1.6.
+        if (this.character.mixer) {
+            // Check if run/stand to adjust speed
+            if (this.currentAnimation === 'run') {
+                this.character.mixer.timeScale = Math.max(0.5, speed / 5.0);
+            } else {
+                // For jump, death, stand - keep normal speed
+                this.character.mixer.timeScale = 1.0;
+            }
+        }
+
         // Update MD2 internal mixer
         this.character.update(deltaTime);
 
@@ -149,7 +165,7 @@ export class Player {
             // VFX Handling
             if (this.currentAnimation === 'run' && vfx) {
                 // Ground particles
-                if (Math.random() < 0.1) {
+                if (Math.random() < 0.1 * (speed / 5)) { // Adjust particle rate too
                     const groundPos = this.mesh.position.clone();
                     groundPos.y = 0.1;
                     vfx.emitBurst(groundPos, 0xaaaaaa, 3, 0.05);
