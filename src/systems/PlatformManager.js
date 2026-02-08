@@ -31,6 +31,10 @@ export class PlatformManager {
         const cubeSize = 0.8;
         const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
+        // Create smaller cube for jumpable obstacles (gray crates on safe lanes)
+        const jumpableSize = 0.5;
+        const jumpableGeometry = new THREE.BoxGeometry(jumpableSize, jumpableSize, jumpableSize);
+
         for (let i = 0; i < CONFIG.PLATFORM.POOL_SIZE; i++) {
             const platformGroup = new THREE.Group();
 
@@ -73,12 +77,27 @@ export class PlatformManager {
                 }
             }
 
+            // Jumpable obstacle (gray crate on safe lanes)
+            // Will be positioned randomly in center of platform
+            const jumpableMat = new THREE.MeshBasicMaterial({
+                map: crateTexture,
+                color: 0xaaaaaa // Light gray tint for better visibility
+            });
+            const jumpableCube = new THREE.Mesh(jumpableGeometry, jumpableMat);
+            jumpableCube.castShadow = true;
+            jumpableCube.receiveShadow = true;
+            jumpableCube.position.set(0, jumpableSize / 2, 0);
+            jumpableCube.visible = false;
+            platformGroup.add(jumpableCube);
+
             platformGroup.visible = false;
             platformGroup.userData = {
                 isDangerous: false,
                 lane: 0,
                 baseMesh: baseMesh,
-                cubes: cubes
+                cubes: cubes,
+                jumpableCube: jumpableCube,
+                hasJumpableObstacle: false
             };
 
             this.pool.push(platformGroup);
@@ -124,6 +143,17 @@ export class PlatformManager {
                 platform.userData.cubes.forEach(cube => {
                     cube.visible = isDangerous;
                 });
+            }
+
+            // Jumpable obstacles ONLY on SAFE lanes (40% chance)
+            platform.userData.hasJumpableObstacle = false;
+            if (platform.userData.jumpableCube) {
+                if (!isDangerous && Math.random() < 0.4) {
+                    platform.userData.jumpableCube.visible = true;
+                    platform.userData.hasJumpableObstacle = true;
+                } else {
+                    platform.userData.jumpableCube.visible = false;
+                }
             }
 
             // Show/hide base platform
