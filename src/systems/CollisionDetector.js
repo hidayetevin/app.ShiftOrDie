@@ -46,9 +46,14 @@ export class CollisionDetector {
             return;
         }
 
-        // Check for jumpable obstacles (gray crates on safe lanes)
-        if (platform.userData.hasJumpableObstacle && platform.userData.jumpableCube) {
-            this.obstacleBox.setFromObject(platform.userData.jumpableCube);
+        // Check for jumpable obstacles (gray crates or soldiers on safe lanes)
+        if (platform.userData.hasJumpableObstacle) {
+            // Use soldier if present, otherwise use gray cube
+            const obstacleTarget = platform.userData.soldierObstacle || platform.userData.jumpableCube;
+
+            if (!obstacleTarget) return;
+
+            this.obstacleBox.setFromObject(obstacleTarget);
 
             // Custom intersection check: Require significant overlap
             const pMin = this.playerBox.min;
@@ -71,7 +76,8 @@ export class CollisionDetector {
 
                 if (playerBottomY >= cubeTopY - landingTolerance) {
                     // Player is on top of the obstacle - SAFE!
-                    console.log(`✅ Landed on obstacle! Safe to stand. PlayerBottom: ${playerBottomY.toFixed(2)}, CubeTop: ${cubeTopY.toFixed(2)}`);
+                    const obstacleType = platform.userData.soldierObstacle ? 'SOLDIER' : 'CUBE';
+                    console.log(`✅ Landed on ${obstacleType}! Safe to stand.`);
                     // Don't kill - player can walk on it
                 } else {
                     // Player hit from side - check if jumping over
@@ -80,11 +86,11 @@ export class CollisionDetector {
 
                     if (playerHeight > jumpThreshold) {
                         // Player successfully jumped over obstacle
-                        console.log(`✅ Cleared jumpable obstacle! PlayerY: ${playerHeight.toFixed(2)} > Threshold: ${jumpThreshold}`);
+                        console.log(`✅ Cleared obstacle! PlayerY: ${playerHeight.toFixed(2)}`);
                     } else {
                         // Player hit obstacle from side while on ground - DEATH
-                        console.warn(`💀 DEATH BY OBSTACLE: PlayerY: ${playerHeight.toFixed(2)} <= Threshold: ${jumpThreshold}`);
-                        console.log('JumpState:', this.player.isJumping);
+                        const obstacleType = platform.userData.soldierObstacle ? 'SOLDIER' : 'OBSTACLE';
+                        console.warn(`💀 DEATH BY ${obstacleType}: PlayerY: ${playerHeight.toFixed(2)}`);
                         this.triggerDeath();
                     }
                 }
