@@ -32,8 +32,10 @@ export class Player {
         const config = {
             baseUrl: 'models/md2/ratamahatta/',
             body: 'ratamahatta.md2',
-            skins: ['ratamahatta.png'], // User must place image in models/md2/ratamahatta/skins/
-            weapons: [] // Weapons disabled to simplify setup
+            skins: ['ratamahatta.png'],
+            weapons: [
+                ['w_glauncher.md2', 'w_glauncher.png']  // [model, texture] format
+            ]
         };
 
         this.character = new MD2Character();
@@ -56,7 +58,18 @@ export class Player {
             // Start idle animation
             this.setAnimation('stand');
 
+            // Mark as loaded immediately so character can update
             this.isLoaded = true;
+
+            // Equip weapon after a short delay (weapon loads asynchronously)
+            setTimeout(() => {
+                if (this.character.weapons && this.character.weapons.length > 0) {
+                    this.character.setWeapon(0);
+                    console.log('🔫 Grenade Launcher equipped!');
+                } else {
+                    console.warn('⚠️ No weapons loaded yet');
+                }
+            }, 200);
         };
 
         // Start loading
