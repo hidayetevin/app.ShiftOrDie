@@ -9,6 +9,7 @@ export class CollisionDetector {
         this.playerBox = new THREE.Box3();
         this.platformBox = new THREE.Box3();
         this.obstacleBox = new THREE.Box3();
+        this.isDead = false; // Prevent multiple death triggers
     }
 
     update() {
@@ -106,8 +107,20 @@ export class CollisionDetector {
     }
 
     triggerDeath() {
+        if (this.isDead) return; // Already dead, prevent duplicate
+        this.isDead = true;
+
         console.log('Player DIED!');
-        this.game.vfx.emitBurst(this.player.mesh.position, 0xff0000, 20);
-        gameState.transition(GameStates.GAMEOVER);
+
+        // Freeze game movement
+        gameState.transition(GameStates.DYING);
+
+        // Play death animation
+        this.player.playDeathAnimation();
+
+        // Delay game over to let animation play
+        setTimeout(() => {
+            gameState.transition(GameStates.GAMEOVER);
+        }, 1500); // 1.5 second delay for death animation
     }
 }

@@ -324,6 +324,24 @@ export class Player {
         return fireball;
     }
 
+    playDeathAnimation() {
+        if (!this.isLoaded) return;
+
+        console.log('💀 Playing death animation...');
+
+        // Stop any ongoing movement
+        this.isJumping = false;
+        this.isShooting = false;
+
+        // Play death animation
+        this.setAnimation('death');
+
+        // Optional: Add dramatic effect
+        if (this.game && this.game.vfx) {
+            this.game.vfx.emitBurst(this.mesh.position, 0xff0000, 40, 0.5);
+        }
+    }
+
     setInvulnerable(duration) {
         this.invulnerable = true;
         // MD2 material handling

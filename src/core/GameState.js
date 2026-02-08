@@ -3,6 +3,7 @@ export const GameStates = {
     MENU: 'menu',
     PLAYING: 'playing',
     PAUSED: 'paused',
+    DYING: 'dying', // Death animation playing, game frozen
     GAMEOVER: 'gameover',
     REWARDED_AD: 'rewarded_ad'
 };
@@ -15,8 +16,9 @@ class GameStateMachine {
         this.validTransitions = {
             [GameStates.LOADING]: [GameStates.MENU],
             [GameStates.MENU]: [GameStates.PLAYING],
-            [GameStates.PLAYING]: [GameStates.PAUSED, GameStates.GAMEOVER],
+            [GameStates.PLAYING]: [GameStates.PAUSED, GameStates.DYING],
             [GameStates.PAUSED]: [GameStates.PLAYING, GameStates.MENU],
+            [GameStates.DYING]: [GameStates.GAMEOVER], // Death animation -> Game Over
             [GameStates.GAMEOVER]: [GameStates.PLAYING, GameStates.MENU, GameStates.REWARDED_AD],
             [GameStates.REWARDED_AD]: [GameStates.PLAYING]
         };

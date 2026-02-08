@@ -136,6 +136,7 @@ class Game {
         this.score.reset();
         this.platform.reset();
         this.ads.reset();
+        this.collision.isDead = false; // Reset death flag
         this.clock.stop();
         this.clock.start();
         this.speedMultiplier = 1.0; // Reset multiplier
@@ -200,6 +201,11 @@ class Game {
             // Camera shake removed per user request
 
             this.progression.updateTaskProgress('survival', this.score.timeSurvived);
+        } else if (gameState.currentState === GameStates.DYING) {
+            // During death animation: freeze movement, only update player and VFX
+            this.player.update(deltaTime, 0, this.vfx, false); // Speed = 0, no shooting
+            this.vfx.update(deltaTime);
+            // Platforms, environment, score all frozen
         }
     }
 
