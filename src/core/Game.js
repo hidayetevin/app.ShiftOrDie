@@ -18,6 +18,8 @@ import { StyleManager } from '../systems/StyleManager';
 import { ErrorManager } from '../systems/ErrorManager';
 import { ParticleSystem } from '../systems/ParticleSystem';
 
+import { EnvironmentManager } from '../systems/EnvironmentManager';
+
 class Game {
     constructor() {
         this.renderer = null;
@@ -39,6 +41,7 @@ class Game {
         this.audio = null;
         this.style = null;
         this.error = null;
+        this.environment = null; // New environment system
 
         this.currentSpeed = CONFIG.DIFFICULTY.SPEED.BASE;
         this.onboardingActive = false;
@@ -65,29 +68,15 @@ class Game {
 
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0a0a0a);
+        this.scene.background = new THREE.Color(0x000000); // Dark background for dungeon
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 3, -5);
         this.camera.lookAt(0, 1, 5);
 
-        // Lighting
-        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-        this.scene.add(ambient);
-
-        const directional = new THREE.DirectionalLight(0xffffff, 0.8);
-        directional.position.set(5, 10, 5);
-        directional.castShadow = true;
-        directional.shadow.camera.near = 0.1;
-        directional.shadow.camera.far = 50;
-        this.scene.add(directional);
-
-        const hemisphere = new THREE.HemisphereLight(0x87ceeb, 0x545454, 0.3);
-        this.scene.add(hemisphere);
-
-        // Ground visualization
-        this.createGround();
+        // Environment (replaces simple ground and adds walls/ceiling)
+        this.environment = new EnvironmentManager(this.scene);
 
         // Post-Processing Initialization (Required before StyleManager applies it)
         this.composer = new EffectComposer(this.renderer);
@@ -162,16 +151,6 @@ class Game {
     continueGame() {
         this.player.setInvulnerable(CONFIG.PLAYER.INVULNERABLE_DURATION);
         gameState.transition(GameStates.PLAYING);
-    }
-
-    createGround() {
-        const geometry = new THREE.PlaneGeometry(10, 200);
-        const material = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
-        const ground = new THREE.Mesh(geometry, material);
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.z = 80;
-        ground.receiveShadow = true;
-        this.scene.add(ground);
     }
 
     onResize() {
