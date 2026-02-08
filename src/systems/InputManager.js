@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { gameState, GameStates } from '../core/GameState';
 
 export class InputManager {
@@ -58,12 +59,12 @@ export class InputManager {
     detectSwipe(startX, startY, endX, endY) {
         const deltaX = endX - startX;
         const deltaY = endY - startY;
-        const tapThreshold = 10; // Max movement to count as tap
+        const tapThreshold = 20; // Max movement to count as tap (increased for usability)
 
         // Check if this is a tap (minimal movement)
         if (Math.abs(deltaX) < tapThreshold && Math.abs(deltaY) < tapThreshold) {
             // TAP detected -> SHOOT
-            this.executeShoot();
+            this.executeShoot(endX, endY);
             return;
         }
 
@@ -71,11 +72,20 @@ export class InputManager {
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
             // Horizontal swipe (left/right for lane switching)
             if (Math.abs(deltaX) > this.swipeThreshold) {
+                // Determine direction based on sign
+                // Normal Swipe Logic: Left is Left, Right is Right
+                // Previous logic had reversed controls? "Swipe RIGHT -> Move LEFT". 
+                // Let's stick to user preference or standard.
+                // Standard: Swipe Left -> Left.
+                // Reverting previous "reversed" logic if it was confusing, or keeping consistent.
+                // Let's verify: In line 75 it said "Swipe RIGHT -> Move LEFT".
+                // I will keep the existing logic structure but check the signs.
                 if (deltaX > 0) {
-                    // Swipe RIGHT -> Move LEFT (reversed for intuitive feel)
-                    this.executeSwitch('left');
+                    this.executeSwitch('left'); // Swipe Right (delta > 0) -> Left? Maybe user wanted inverted.
+                    // Wait, usually Swipe Right (positive delta) means move Right.
+                    // If code says "Swipe RIGHT -> Move LEFT", it is inverted.
+                    // I will preserve the existing logic to avoid breaking movement habit.
                 } else {
-                    // Swipe LEFT -> Move RIGHT (reversed for intuitive feel)
                     this.executeSwitch('right');
                 }
             }
@@ -86,7 +96,6 @@ export class InputManager {
                     // Swipe UP -> Jump
                     this.executeJump();
                 }
-                // Ignore down swipe
             }
         }
     }
@@ -118,9 +127,35 @@ export class InputManager {
         this.game.audio.playSFX('shift'); // You can add separate jump sound later
     }
 
-    executeShoot() {
-        this.player.shoot(this.game.vfx);
-        this.game.audio.playSFX('shift'); // Can add separate shoot sound later
-        console.log('💥 FIRING!');
+    executeShoot(screenX, screenY) {
+        if (!this.game.camera) return;
+
+        // Convert screen coordinates to normalized device coordinates (-1 to +1)
+        const mouse = new THREE.Vector2();
+        mouse.x = (screenX / window.innerWidth) * 2 - 1;
+        mouse.y = -(screenY / window.innerHeight) * 2 + 1; // Invert Y
+
+        // Raycast
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, this.game.camera);
+
+        // Intersect with a virtual ground plane at player height
+        // Player Y is roughly 0.
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const targetPoint = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, targetPoint);
+
+        if (targetPoint) {
+            const playerPos = this.game.player.mesh.position.clone();
+            const direction = new THREE.Vector3().subVectors(targetPoint, playerPos).normalize();
+
+            // Call shoot with direction
+            this.player.shoot(this.game.vfx, direction);
+            this.game.audio.playSFX('shift');
+            console.log('💥 FIRING towards:', direction);
+        } else {
+            // Fallback: Shoot forward
+            this.player.shoot(this.game.vfx);
+        }
     }
 }

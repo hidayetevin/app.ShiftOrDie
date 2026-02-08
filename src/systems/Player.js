@@ -172,7 +172,11 @@ export class Player {
             const proj = this.projectiles[i];
 
             // Move projectile forward (in world space, independent of game speed)
-            proj.position.z += proj.speed * deltaTime;
+            if (proj.velocity) {
+                proj.position.add(proj.velocity.clone().multiplyScalar(deltaTime));
+            } else {
+                proj.position.z += proj.speed * deltaTime;
+            }
 
             // Add trail effect
             if (vfx && Math.random() < 0.5) {
@@ -246,7 +250,10 @@ export class Player {
             }
 
             // Remove projectile if hit or traveled too far
-            if (hitSoldier || proj.distanceTraveled > 50 || proj.position.z < -30) {
+            // Use projected Z or distance from start
+            // Since we shoot in any direction, relying on Z < -30 is risky if shooting sideways
+            // Better to use distanceTraveled
+            if (hitSoldier || proj.distanceTraveled > 60) {
                 this.scene.remove(proj);
                 this.projectiles.splice(i, 1);
             } else {
@@ -343,7 +350,7 @@ export class Player {
         if (vfx) vfx.emitBurst(this.mesh.position, 0x00ff00, 8);
     }
 
-    shoot(vfx) {
+    shoot(vfx, direction = new THREE.Vector3(0, 0, 1)) {
         // Cooldown check
         if (this.isShooting) return;
 
@@ -358,11 +365,13 @@ export class Player {
         if (vfx && this.character.meshWeapon) {
             const weaponPos = this.mesh.position.clone();
             weaponPos.y += 1.2; // Height of weapon
-            weaponPos.z += 0.5; // In front of player
+            // Adjust weapon pos based on direction slightly to not clip
+            weaponPos.add(direction.clone().multiplyScalar(0.5));
+
             vfx.emitBurst(weaponPos, weaponStats ? weaponStats.color : 0xff6600, 12, 0.2); // Weapon color flash
 
             // Create fireball projectile
-            const projectile = this.createFireball(weaponPos);
+            const projectile = this.createFireball(weaponPos, direction);
             this.scene.add(projectile);
             this.projectiles.push(projectile);
         }
@@ -370,10 +379,10 @@ export class Player {
         // Cooldown timer
         setTimeout(() => {
             this.isShooting = false;
-        }, 300); // Short cooldown
+        }, 150); // Faster fire rate for tap shooting
     }
 
-    createFireball(position) {
+    createFireball(position, direction) {
         // Get current weapon stats
         const weaponId = marketManager.getSelectedWeapon();
         const weaponStats = getWeaponById(weaponId) || WEAPON_CONFIG[0];
@@ -382,7 +391,7 @@ export class Player {
         let geometry;
         if (weaponStats.type === 'laser') {
             geometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8, 1);
-            geometry.rotateX(Math.PI / 2); // Rotate to face forward
+            geometry.rotateX(Math.PI / 2); // Rotate to face forward relative to local Z
         } else {
             geometry = new THREE.SphereGeometry(0.15, 16, 16);
         }
@@ -398,6 +407,10 @@ export class Player {
         const fireball = new THREE.Mesh(geometry, material);
         fireball.position.copy(position);
 
+        // Orient to direction
+        const lookTarget = position.clone().add(direction);
+        fireball.lookAt(lookTarget);
+
         // Add point light for glow effect
         const light = new THREE.PointLight(weaponStats.color, 2, 3);
         fireball.add(light);
@@ -405,6 +418,7 @@ export class Player {
         // Custom properties
         fireball.speed = weaponStats.type === 'laser' ? 35 : 25; // Lasers are faster
         fireball.damage = weaponStats.damage; // Store damage on projectile
+        fireball.velocity = direction.clone().multiplyScalar(fireball.speed);
         fireball.distanceTraveled = 0;
 
         return fireball;
