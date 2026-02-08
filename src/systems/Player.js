@@ -249,6 +249,42 @@ export class Player {
                 }
             }
 
+            // Check collision with crates (obstacles)
+            if (!hitSoldier && this.game && this.game.platform) {
+                const platforms = this.game.platform.active;
+                for (const platform of platforms) {
+                    // Check regular cubes/crates
+                    if (platform.userData.cubes) {
+                        for (const cube of platform.userData.cubes) {
+                            if (cube.visible) {
+                                const cubeWorldPos = new THREE.Vector3();
+                                cube.getWorldPosition(cubeWorldPos);
+                                // Simple distance check (Cube size ~0.8)
+                                if (proj.position.distanceTo(cubeWorldPos) < 0.8) {
+                                    hitSoldier = true; // Mark as hit to remove projectile
+                                    // Visual effect for hitting wall/crate
+                                    if (vfx) vfx.emitBurst(proj.position, 0xaaaaaa, 5, 0.1);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (hitSoldier) break;
+
+                    // Check jumpable cubes if visible
+                    if (platform.userData.jumpableCube && platform.userData.jumpableCube.visible) {
+                        const cubeWorldPos = new THREE.Vector3();
+                        platform.userData.jumpableCube.getWorldPosition(cubeWorldPos);
+                        if (proj.position.distanceTo(cubeWorldPos) < 0.8) {
+                            hitSoldier = true;
+                            if (vfx) vfx.emitBurst(proj.position, 0xaaaaaa, 5, 0.1);
+                            break;
+                        }
+                    }
+                    if (hitSoldier) break;
+                }
+            }
+
             // Remove projectile if hit or traveled too far
             // Use projected Z or distance from start
             // Since we shoot in any direction, relying on Z < -30 is risky if shooting sideways
