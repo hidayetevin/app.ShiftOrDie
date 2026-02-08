@@ -64,18 +64,29 @@ export class CollisionDetector {
             const collisionDepth = 0.3;
 
             if (overlapX > collisionDepth && overlapZ > collisionDepth) {
-                // Check if player is in the air (jumping)
-                const playerHeight = this.player.mesh.position.y;
-                const jumpThreshold = 0.9; // High threshold for clean jumps
+                // NEW: Check if player landed ON TOP of the obstacle
+                const cubeTopY = oMax.y;
+                const playerBottomY = pMin.y;
+                const landingTolerance = 0.2; // How close to top counts as "landed"
 
-                if (playerHeight > jumpThreshold) {
-                    // Player successfully jumped over obstacle
-                    console.log(`✅ Cleared jumpable obstacle! PlayerY: ${playerHeight.toFixed(2)} > Threshold: ${jumpThreshold}`);
+                if (playerBottomY >= cubeTopY - landingTolerance) {
+                    // Player is on top of the obstacle - SAFE!
+                    console.log(`✅ Landed on obstacle! Safe to stand. PlayerBottom: ${playerBottomY.toFixed(2)}, CubeTop: ${cubeTopY.toFixed(2)}`);
+                    // Don't kill - player can walk on it
                 } else {
-                    // Player hit obstacle while on ground - DEATH
-                    console.warn(`💀 DEATH BY OBSTACLE: PlayerY: ${playerHeight.toFixed(2)} <= Threshold: ${jumpThreshold}`);
-                    console.log('JumpState:', this.player.isJumping);
-                    this.triggerDeath();
+                    // Player hit from side - check if jumping over
+                    const playerHeight = this.player.mesh.position.y;
+                    const jumpThreshold = 0.9; // High threshold for clean jumps
+
+                    if (playerHeight > jumpThreshold) {
+                        // Player successfully jumped over obstacle
+                        console.log(`✅ Cleared jumpable obstacle! PlayerY: ${playerHeight.toFixed(2)} > Threshold: ${jumpThreshold}`);
+                    } else {
+                        // Player hit obstacle from side while on ground - DEATH
+                        console.warn(`💀 DEATH BY OBSTACLE: PlayerY: ${playerHeight.toFixed(2)} <= Threshold: ${jumpThreshold}`);
+                        console.log('JumpState:', this.player.isJumping);
+                        this.triggerDeath();
+                    }
                 }
             }
         }
