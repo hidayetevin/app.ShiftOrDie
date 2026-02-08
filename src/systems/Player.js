@@ -298,9 +298,7 @@ export class Player {
 
         this.isShooting = true;
 
-        // Play attack animation
-        const previousAnimation = this.currentAnimation;
-        this.setAnimation('attack');
+        // Don't change animation - keep running while shooting
 
         // Muzzle flash effect
         if (vfx && this.character.meshWeapon) {
@@ -315,13 +313,10 @@ export class Player {
             this.projectiles.push(projectile);
         }
 
-        // Return to previous animation after attack
+        // Cooldown timer
         setTimeout(() => {
             this.isShooting = false;
-            if (!this.isJumping) {
-                this.setAnimation(previousAnimation);
-            }
-        }, 500); // Attack animation duration
+        }, 300); // Short cooldown
     }
 
     createFireball(position) {
