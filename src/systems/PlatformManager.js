@@ -205,10 +205,18 @@ export class PlatformManager {
             bullet.userData.lifetime -= deltaTime;
 
             // Check Collision with Player
-            const playerPos = this.game.player.mesh.position.clone();
-            const dist = bullet.position.distanceTo(playerPos);
+            // Use Cylinder collision (XZ distance + Y height check)
+            const playerPos = this.game.player.mesh.position;
+            const dx = bullet.position.x - playerPos.x;
+            const dz = bullet.position.z - playerPos.z;
+            const distXZ = Math.sqrt(dx * dx + dz * dz);
 
-            if (dist < 0.8 && !this.game.player.isDying && !this.game.player.invulnerable) {
+            // Bullet Y is around 1.5, Player Y is 0, height ~1.8
+            // Check if bullet matches player height range
+            const bulletY = bullet.position.y;
+            const withinHeight = bulletY > 0 && bulletY < 2.0;
+
+            if (distXZ < 0.6 && withinHeight && !this.game.player.isDying && !this.game.player.invulnerable) {
                 console.log('💥 Player Hit by Enemy Bullet!');
 
                 // Damage Player
