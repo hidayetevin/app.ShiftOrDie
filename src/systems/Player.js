@@ -17,7 +17,7 @@ export class Player {
         this.isShooting = false;
         this.isDying = false; // Flag to lock death animation
         this.game = null;
-        this.currentAnimation = 'stand';
+        this.currentAnimation = null; // Will be set when character loads
         this.projectiles = []; // Track active projectiles
         this.killCount = 0; // Track soldier kills for coin rewards
         this.health = 10;
@@ -148,8 +148,13 @@ export class Player {
 
             this.mesh.position.set(0, 0, 0); // Will be adjusted in update
             this.mesh.rotation.y = 0; // Face +Z (Forward/Camera in Menu)
-            this.setAnimation(this.idleAnimationName || 'stand');
-            if (this.character.mixer) this.character.mixer.timeScale = 1.0; // Normal speed
+
+            // Only set animation if character is already loaded
+            if (this.isLoaded) {
+                this.setAnimation(this.idleAnimationName || 'stand');
+                if (this.character.mixer) this.character.mixer.timeScale = 1.0; // Normal speed
+            }
+            // If not loaded yet, the animation will be set in onLoadComplete callback
         } else {
             this.isMenuMode = false;
             this.reset();
