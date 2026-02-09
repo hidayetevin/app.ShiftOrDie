@@ -73,8 +73,8 @@ class Game {
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 3, -5);
-        this.camera.lookAt(0, 1, 5);
+        this.camera.position.set(0, 5, -6); // Higher position
+        this.camera.lookAt(0, 0, 4); // Look slightly down towards player path
 
         // Environment (replaces simple ground and adds walls/ceiling)
         this.environment = new EnvironmentManager(this.scene);
