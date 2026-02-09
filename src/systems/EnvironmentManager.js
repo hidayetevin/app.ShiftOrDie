@@ -140,12 +140,12 @@ export class EnvironmentManager {
             side: THREE.DoubleSide
         });
 
-        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-        ceiling.rotation.x = Math.PI / 2;
-        ceiling.position.z = 80;
-        ceiling.position.y = 5;
-        ceiling.receiveShadow = true;
-        this.scene.add(ceiling);
+        this.ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        this.ceiling.rotation.x = Math.PI / 2;
+        this.ceiling.position.z = 80;
+        this.ceiling.position.y = 8;
+        this.ceiling.receiveShadow = true;
+        this.scene.add(this.ceiling);
     }
 
     createLighting() {

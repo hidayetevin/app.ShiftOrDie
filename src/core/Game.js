@@ -73,8 +73,8 @@ class Game {
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 5, -6); // Higher position
-        this.camera.lookAt(0, 0, 4); // Look slightly down towards player path
+        this.camera.position.set(0, 4.5, -6); // Slightly higher for better overview
+        this.camera.lookAt(0, 0.5, 4); // Look down towards player path
 
         // Environment (replaces simple ground and adds walls/ceiling)
         this.environment = new EnvironmentManager(this.scene);
@@ -161,8 +161,8 @@ class Game {
             this.player.setMenuMode(false);
 
             // Restore Game Camera Position (-Z axis)
-            this.camera.position.set(0, 5, -6);
-            this.camera.lookAt(0, 0, 4);
+            this.camera.position.set(0, 4.5, -6);
+            this.camera.lookAt(0, 0.5, 4);
         }
     }
 
