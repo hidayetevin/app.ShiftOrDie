@@ -1314,7 +1314,7 @@ class MockAdManager {
 {
   "menu": {
     "play": "OYNA",
-    "daily_tasks": "Günlük Görevler",
+    "daily_tasks": "Görevler",
     "style": "Stil",
     "settings": "Ayarlar"
   },
@@ -1329,7 +1329,7 @@ class MockAdManager {
     "quit": "Çık"
   },
   "tasks": {
-    "daily_tasks": "Günlük Görevler",
+    "daily_tasks": "Görevler",
     "claim": "AL",
     "survive": "{{time}} saniye hayatta kal",
     "shifts": "{{count}} kez şerit değiştir",
