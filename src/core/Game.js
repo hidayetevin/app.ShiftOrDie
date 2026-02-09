@@ -219,7 +219,10 @@ class Game {
     }
 
     update(deltaTime) {
-        if (gameState.currentState === GameStates.PLAYING) {
+        if (gameState.currentState === GameStates.MENU) {
+            // Update player animation in menu
+            this.player.update(deltaTime, 0, this.vfx, false);
+        } else if (gameState.currentState === GameStates.PLAYING) {
             this.updateDifficulty();
 
             // Calculate effective speed with multiplier (for jump dash effect)

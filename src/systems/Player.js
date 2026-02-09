@@ -69,13 +69,30 @@ export class Player {
 
             // Log available animations
             const animations = this.character.meshBody.geometry.animations;
-            console.log('📦 Available animations:', animations.map(a => a.name));
+            const animNames = animations.map(a => a.name);
+            console.log('📦 Available animations:', animNames);
+
+            // Determine correct idle animation name
+            if (animNames.includes('stand')) {
+                this.idleAnimationName = 'stand';
+            } else if (animNames.includes('idle')) {
+                this.idleAnimationName = 'idle';
+            } else {
+                this.idleAnimationName = animNames[0]; // Fallback to first animation
+                console.warn(`⚠️ 'stand' animation not found, falling back to '${this.idleAnimationName}'`);
+            }
 
             // Start idle animation
-            this.setAnimation('stand');
+            this.setAnimation(this.idleAnimationName);
 
             // Mark as loaded immediately so character can update
             this.isLoaded = true;
+
+            // If we are already in menu mode (e.g. initial load), re-apply menu settings to ensure animation/scale are correct
+            if (this.isMenuMode) {
+                console.log('🔄 Re-applying menu mode after load');
+                this.setMenuMode(true);
+            }
 
             // Equip weapon after a short delay (weapon loads asynchronously)
             setTimeout(() => {
@@ -118,17 +135,21 @@ export class Player {
 
         // Reset animation
         if (this.isLoaded) {
-            this.setAnimation('stand');
+            this.setAnimation(this.idleAnimationName || 'stand');
         }
     }
 
     setMenuMode(active) {
         this.isMenuMode = active;
         if (active) {
+            // Kill any active tweens (e.g. from lane switching)
+            gsap.killTweensOf(this.mesh.position);
+            gsap.killTweensOf(this.mesh.rotation);
+
             this.mesh.position.set(0, 0, 0); // Will be adjusted in update
             this.mesh.rotation.y = 0; // Face +Z (Forward/Camera in Menu)
-            this.setAnimation('stand');
-            if (this.character.mixer) this.character.mixer.timeScale = 1.0;
+            this.setAnimation(this.idleAnimationName || 'stand');
+            if (this.character.mixer) this.character.mixer.timeScale = 1.0; // Normal speed
         } else {
             this.isMenuMode = false;
             this.reset();
@@ -139,13 +160,21 @@ export class Player {
         if (!this.isLoaded) return;
 
         if (this.isMenuMode) {
-            // Enforce position and rotation in menu mode
+            // Enforce position
             this.mesh.position.set(0, -0.5, 0);
-            this.mesh.rotation.y = 0; // Face +Z
+
+            // Subtle idle rotation to make it feel alive
+            const time = Date.now() * 0.0005;
+            this.mesh.rotation.y = Math.sin(time) * 0.15;
 
             this.character.update(deltaTime);
-            if (this.currentAnimation !== 'stand') {
-                this.setAnimation('stand');
+            const idleAnim = this.idleAnimationName || 'stand';
+            if (this.currentAnimation !== idleAnim) {
+                this.setAnimation(idleAnim);
+            }
+            // Ensure animation plays nicely
+            if (this.character.mixer && this.character.mixer.timeScale !== 1.0) {
+                this.character.mixer.timeScale = 1.0;
             }
             return;
         }
@@ -200,8 +229,9 @@ export class Player {
 
         } else {
             // Not playing -> Stand
-            if (this.currentAnimation !== 'stand') {
-                this.setAnimation('stand');
+            const idleAnim = this.idleAnimationName || 'stand';
+            if (this.currentAnimation !== idleAnim) {
+                this.setAnimation(idleAnim);
             }
         }
 
