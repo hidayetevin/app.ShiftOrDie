@@ -44,17 +44,25 @@ export class UIManager {
     renderMenu() {
         const div = document.createElement('div');
         div.className = 'ui-screen menu-screen';
+
+        // Settings button alone at top-left
+        const settingsIcon = '⚙️';
+
         div.innerHTML = `
+            <button id="btn-settings" class="btn-settings-icon">${settingsIcon}</button>
             <div class="stats-top">
                 <span>🪙 ${this.game.progression.data.total_coins}</span>
                 <span>🏆 ${this.game.score.highScore}</span>
             </div>
-            <h1>SHIFT OR DIE</h1>
-            <div class="menu-buttons">
-                <button id="btn-play" class="btn-main">${i18n.t('menu.play')}</button>
-                <button id="btn-tasks">${i18n.t('menu.daily_tasks')}</button>
-                <button id="btn-market">Market</button>
-                <button id="btn-settings">${i18n.t('menu.settings')}</button>
+            
+            <p class="game-title">SHIFT OR DIE</p>
+            
+            <div class="menu-bottom-container">
+                <button id="btn-play" class="btn-primary-large">${i18n.t('menu.play')}</button>
+                <div class="menu-row-sub">
+                    <button id="btn-tasks" class="btn-secondary">${i18n.t('menu.daily_tasks')}</button>
+                    <button id="btn-market" class="btn-secondary">Market</button>
+                </div>
             </div>
         `;
         this.root.appendChild(div);
