@@ -113,6 +113,11 @@ class Game {
         // State Change Listeners
         gameState.onStateChange((newState, oldState) => this.onStateChange(newState, oldState));
 
+        // Initial Menu Mode Check
+        if (gameState.currentState === GameStates.MENU) {
+            this.setMenuMode(true);
+        }
+
         // Resize handling
         window.addEventListener('resize', () => this.onResize());
 
@@ -124,16 +129,45 @@ class Game {
     }
 
     onStateChange(newState, oldState) {
-        if (newState === GameStates.PLAYING && oldState !== GameStates.PAUSED) {
-            this.resetGame();
-        }
         if (newState === GameStates.MENU) {
             this.audio.playMusic('main');
+            this.setMenuMode(true);
+        } else if (newState === GameStates.PLAYING) {
+            this.setMenuMode(false);
+            if (oldState !== GameStates.PAUSED) {
+                this.resetGame();
+            }
+        }
+    }
+
+    setMenuMode(active) {
+        if (active) {
+            // Hide game environment for studio view
+            this.environment.setVisible(false);
+            this.platform.setVisible(false);
+
+            // Set Player to Menu Mode (Stand)
+            this.player.setMenuMode(true);
+
+            // Menu Camera Position (Front view - +Z axis)
+            this.camera.position.set(0, 1.5, 4.0);
+            this.camera.lookAt(0, 0.8, 0);
+        } else {
+            // Show game environment
+            this.environment.setVisible(true);
+            this.platform.setVisible(true);
+
+            // Ensure player exits menu mode
+            this.player.setMenuMode(false);
+
+            // Restore Game Camera Position (-Z axis)
+            this.camera.position.set(0, 5, -6);
+            this.camera.lookAt(0, 0, 4);
         }
     }
 
     resetGame() {
-        this.player.reset();
+        this.player.reset(); // Will verify menu mode is off by positioning
         this.score.reset();
         this.platform.reset();
         this.ads.reset();

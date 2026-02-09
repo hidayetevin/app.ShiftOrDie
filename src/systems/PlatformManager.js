@@ -372,4 +372,14 @@ export class PlatformManager {
 
         this.timeSinceLastSpawn = 0;
     }
+
+    setVisible(visible) {
+        this.active.forEach(platform => {
+            platform.visible = visible;
+        });
+
+        this.enemyProjectiles.forEach(proj => {
+            proj.visible = visible;
+        });
+    }
 }

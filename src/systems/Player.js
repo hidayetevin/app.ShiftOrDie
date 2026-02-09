@@ -102,6 +102,7 @@ export class Player {
     reset() {
         this.currentLane = 1;
         this.mesh.position.set(CONFIG.LANE.POSITIONS[1], 0, 0);
+        this.mesh.rotation.y = 0; // Ensure facing forward (+Z)
         this.invulnerable = false;
         this.isJumping = false;
         this.isShooting = false;
@@ -121,8 +122,33 @@ export class Player {
         }
     }
 
+    setMenuMode(active) {
+        this.isMenuMode = active;
+        if (active) {
+            this.mesh.position.set(0, 0, 0); // Will be adjusted in update
+            this.mesh.rotation.y = 0; // Face +Z (Forward/Camera in Menu)
+            this.setAnimation('stand');
+            if (this.character.mixer) this.character.mixer.timeScale = 1.0;
+        } else {
+            this.isMenuMode = false;
+            this.reset();
+        }
+    }
+
     update(deltaTime, speed, vfx, isPlaying) {
         if (!this.isLoaded) return;
+
+        if (this.isMenuMode) {
+            // Enforce position and rotation in menu mode
+            this.mesh.position.set(0, -0.5, 0);
+            this.mesh.rotation.y = 0; // Face +Z
+
+            this.character.update(deltaTime);
+            if (this.currentAnimation !== 'stand') {
+                this.setAnimation('stand');
+            }
+            return;
+        }
 
         // Sync animation speed with game speed
         // Base speed was roughly 5.0. New base is 2.5.

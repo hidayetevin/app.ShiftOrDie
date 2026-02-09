@@ -189,6 +189,14 @@ export class EnvironmentManager {
         }
     }
 
+    setVisible(visible) {
+        if (this.floor) this.floor.visible = visible;
+        if (this.ceiling) this.ceiling.visible = visible;
+
+        this.walls.forEach(wall => wall.visible = visible);
+        this.wallCubes.forEach(cube => cube.visible = visible);
+    }
+
     update(deltaTime, gameSpeed) {
         // Scroll floor texture to create movement illusion
         if (this.floorTexture) {
