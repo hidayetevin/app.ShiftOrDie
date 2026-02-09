@@ -146,7 +146,7 @@ export class Player {
             gsap.killTweensOf(this.mesh.position);
             gsap.killTweensOf(this.mesh.rotation);
 
-            this.mesh.position.set(0, 0, 0); // Will be adjusted in update
+            this.mesh.position.set(-0.2, -0.2, 0); // Centered position
             this.mesh.rotation.y = 0; // Face +Z (Forward/Camera in Menu)
 
             // Only set animation if character is already loaded
@@ -165,8 +165,8 @@ export class Player {
         if (!this.isLoaded) return;
 
         if (this.isMenuMode) {
-            // Enforce position
-            this.mesh.position.set(0, -0.5, 0);
+            // Enforce position (x offset to center character visually)
+            this.mesh.position.set(-0.2, -0.2, 0);
 
             // Subtle idle rotation to make it feel alive
             const time = Date.now() * 0.0005;
