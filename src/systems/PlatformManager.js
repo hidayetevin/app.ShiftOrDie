@@ -11,13 +11,17 @@ export class PlatformManager {
         this.active = [];
         this.lastSpawnZ = CONFIG.PLATFORM.SPAWN_DISTANCE;
         this.timeSinceLastSpawn = 0;
+
+        // SPACER LOGIC: Track obstacle positions to enforce gaps
+        this.spawnCounter = 0;
+        this.lastObstacleIndices = [-99, -99, -99]; // Per lane tracker
+
         this.soldierModel = null;
         this.enemyProjectiles = [];
         this.game = null;
         this.loaded = false; // Flag to check if pool is ready
 
         this.loadSoldierModel();
-        // initPool() removed from here - will be called by Game.js
     }
 
     setGame(game) {
@@ -155,19 +159,6 @@ export class PlatformManager {
             soldier.rotation.y = Math.PI;
             soldier.visible = false;
 
-            // ANIMATION SETUP
-            // DISABLED: User requested soldiers not to run (Static Pose)
-            /*
-            if (this.soldierAnimations && this.soldierAnimations.length > 0) {
-                mixer = new THREE.AnimationMixer(soldier);
-                const runClip = THREE.AnimationClip.findByName(this.soldierAnimations, 'Run') || this.soldierAnimations[1]; // Usually Run is index 1 or 3
-                if (runClip) {
-                    const action = mixer.clipAction(runClip);
-                    action.play();
-                }
-            }
-            */
-
             // Health Bar
             const hpGroup = new THREE.Group();
             hpGroup.position.set(0, 2.2, 0);
@@ -211,10 +202,6 @@ export class PlatformManager {
         this.pool.push(platformGroup);
         this.scene.add(platformGroup);
     }
-
-    // Old initPool removed
-
-
 
     update(deltaTime, gameSpeed) {
         this.timeSinceLastSpawn += deltaTime;
@@ -338,6 +325,8 @@ export class PlatformManager {
             return;
         }
 
+        this.spawnCounter++; // Increment row counter
+
         for (let i = 0; i < CONFIG.LANE.COUNT; i++) {
             const platform = this.pool.pop();
             this.setupPlatform(platform, i);
@@ -372,22 +361,31 @@ export class PlatformManager {
 
         if (isDangerous) {
             // Hazard Lane: Activate Random Cubes
-            // We have 12 cubes (4 stacks of 3). Pick a pattern.
-            // Simple: 1 stack of random height per row
             const numRows = 4;
+            const baseIndex = this.spawnCounter * numRows;
+
             for (let r = 0; r < numRows; r++) {
+                // GAP CHECK: Must be at least 2 empty blocks (gap >= 3)
+                const globalIdx = baseIndex + r;
+                if (this.lastObstacleIndices && (globalIdx - this.lastObstacleIndices[laneIndex] < 3)) {
+                    continue;
+                }
+
                 // REDUCED DENSITY: Only 60% of rows have blocks
                 if (Math.random() > 0.6) continue;
 
+                // Place Obstacle
                 const h = Math.floor(Math.random() * 3) + 1; // 1-3 height
                 for (let k = 0; k < h; k++) {
-                    // Index mapping: r is the position index (0-3), k is height (0-2)
-                    // In createSinglePlatform: cubes.push(cube) inner loop is k, outer is j (pos)
-                    // Index = (r * 3) + k
                     const idx = r * 3 + k;
                     if (platform.userData.cubes[idx]) {
                         platform.userData.cubes[idx].visible = true;
                     }
+                }
+
+                // Update last obstacle position
+                if (this.lastObstacleIndices) {
+                    this.lastObstacleIndices[laneIndex] = globalIdx;
                 }
             }
         } else {
@@ -440,6 +438,8 @@ export class PlatformManager {
         this.enemyProjectiles = [];
 
         this.timeSinceLastSpawn = 0;
+        this.spawnCounter = 0;
+        this.lastObstacleIndices = [-99, -99, -99];
     }
 
     setVisible(visible) {
