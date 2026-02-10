@@ -451,7 +451,7 @@ button[disabled] {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: transparent;
     border-radius: 8px;
     margin-bottom: 5px;
     overflow: hidden;

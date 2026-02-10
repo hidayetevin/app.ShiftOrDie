@@ -1,5 +1,6 @@
 import { marketManager } from '../systems/MarketManager';
 import { WEAPON_CONFIG, SKIN_CONFIG } from '../systems/WeaponConfig';
+import { i18n } from '../systems/I18n';
 
 export class MarketModal {
     constructor(game, onClose) {
@@ -21,13 +22,13 @@ export class MarketModal {
         this.root.innerHTML = `
             <div class="modal-content market-content">
                 <div class="market-header">
-                    <h2>MARKET</h2>
+                    <h2>${i18n.t('market.title')}</h2>
                     <button class="btn-close">X</button>
                 </div>
                 
                 <div class="market-tabs">
-                    <button class="tab-btn ${this.currentTab === 'skins' ? 'active' : ''}" data-tab="skins">SKINS</button>
-                    <button class="tab-btn ${this.currentTab === 'weapons' ? 'active' : ''}" data-tab="weapons">WEAPONS</button>
+                    <button class="tab-btn ${this.currentTab === 'skins' ? 'active' : ''}" data-tab="skins">${i18n.t('market.skins')}</button>
+                    <button class="tab-btn ${this.currentTab === 'weapons' ? 'active' : ''}" data-tab="weapons">${i18n.t('market.weapons')}</button>
                 </div>
 
                 <div class="market-grid" id="market-grid">
@@ -56,7 +57,7 @@ export class MarketModal {
                     <div class="item-info">
                         <h3>${skin.name}</h3>
                         <button class="btn-select" data-id="${skin.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? 'EQUIPPED' : 'SELECT'}
+                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
                         </button>
                     </div>
                 `;
@@ -69,13 +70,13 @@ export class MarketModal {
                 item.className = `market-item ${isSelected ? 'selected' : ''}`;
                 item.innerHTML = `
                     <div class="item-preview weapon-preview">
-                        <img src="models/md2/ratamahatta/Weapons/${weapon.shop}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="models/md2/ratamahatta/Weapons/${weapon.shop}" style="width: 100%;  object-fit: contain;">
                     </div>
                     <div class="item-info">
                         <h3>${weapon.name}</h3>
-                        <div class="stat-damage">DMG: ${weapon.damage}</div>
+                        <div class="stat-damage">${i18n.t('market.dmg')}: ${weapon.damage}</div>
                         <button class="btn-select" data-id="${weapon.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? 'EQUIPPED' : 'SELECT'}
+                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
                         </button>
                     </div>
                 `;

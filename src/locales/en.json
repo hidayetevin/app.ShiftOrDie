@@ -2,6 +2,7 @@
     "menu": {
         "play": "PLAY",
         "daily_tasks": "Daily Tasks",
+        "market": "Shop",
         "style": "Style",
         "settings": "Settings"
     },
@@ -26,5 +27,13 @@
         "music": "Music",
         "sfx": "Sound Effects",
         "language": "Language"
+    },
+    "market": {
+        "title": "SHOP",
+        "skins": "SKINS",
+        "weapons": "WEAPONS",
+        "equipped": "EQUIPPED",
+        "select": "SELECT",
+        "dmg": "DMG"
     }
 }

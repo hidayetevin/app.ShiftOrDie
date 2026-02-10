@@ -61,7 +61,7 @@ export class UIManager {
                 <button id="btn-play" class="btn-primary-large">${i18n.t('menu.play')}</button>
                 <div class="menu-row-sub">
                     <button id="btn-tasks" class="btn-secondary">${i18n.t('menu.daily_tasks')}</button>
-                    <button id="btn-market" class="btn-secondary">Market</button>
+                    <button id="btn-market" class="btn-secondary">${i18n.t('menu.market')}</button>
                 </div>
             </div>
         `;

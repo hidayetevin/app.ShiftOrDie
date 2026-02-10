@@ -2,6 +2,7 @@
     "menu": {
         "play": "OYNA",
         "daily_tasks": "Görevler",
+        "market": "Market",
         "style": "Stil",
         "settings": "Ayarlar"
     },
@@ -26,5 +27,13 @@
         "music": "Müzik",
         "sfx": "Ses Efektleri",
         "language": "Dil"
+    },
+    "market": {
+        "title": "MARKET",
+        "skins": "KOSTÜMLER",
+        "weapons": "SİLAHLAR",
+        "equipped": "KUŞANILDI",
+        "select": "SEÇ",
+        "dmg": "HASAR"
     }
 }
