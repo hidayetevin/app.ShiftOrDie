@@ -406,6 +406,9 @@ button[disabled] {
     gap: 15px;
     padding: 10px;
     overflow-y: auto;
+    touch-action: pan-y;
+    /* Enable scroll */
+    -webkit-overflow-scrolling: touch;
     /* Custom scrollbar */
     scrollbar-width: thin;
     scrollbar-color: var(--primary) #111;
@@ -847,4 +850,27 @@ button[disabled] {
 
 .ad-icon {
     font-size: 1.4rem;
+}
+
+/* FORCE SCROLL ON TOUCH DEVICES */
+/* Containers */
+.modal-content,
+.task-list,
+.settings-list,
+.market-grid,
+.market-content,
+.market-tab-content {
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+}
+
+/* Children items (Cards, Text, Images) MUST allow pan-y to let parent scroll */
+.market-grid *,
+.task-list *,
+.settings-list *,
+.modal-content * {
+    touch-action: pan-y !important;
+    user-select: none;
 }
