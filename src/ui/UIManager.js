@@ -258,23 +258,37 @@ export class UIManager {
 
     renderSettings() {
         const div = document.createElement('div');
-        div.className = 'ui-modal';
+        div.className = 'ui-screen'; // Use full screen overlay for positioning
+        div.style.background = 'rgba(0,0,0,0.5)'; // Darken background
+
         div.innerHTML = `
-            <div class="modal-content">
-                <h2>${i18n.t('menu.settings')}</h2>
-                <button class="btn-close">X</button>
+            <div class="settings-modal">
+                <div class="settings-header">
+                    <h2>${i18n.t('menu.settings')}</h2>
+                    <button class="btn-close">X</button>
+                </div>
+                
                 <div class="settings-list">
+                    <!-- Music Setting -->
                     <div class="setting-item">
                         <span>${i18n.t('settings.music')}</span>
-                        <button id="toggle-music">${this.game.audio.settings.music ? 'ON' : 'OFF'}</button>
+                        <div id="toggle-music" class="toggle-btn ${this.game.audio.settings.music ? 'active' : ''}">
+                            <div class="toggle-knob"></div>
+                        </div>
                     </div>
+                    
+                    <!-- SFX Setting -->
                     <div class="setting-item">
                         <span>${i18n.t('settings.sfx')}</span>
-                        <button id="toggle-sfx">${this.game.audio.settings.sfx ? 'ON' : 'OFF'}</button>
+                        <div id="toggle-sfx" class="toggle-btn ${this.game.audio.settings.sfx ? 'active' : ''}">
+                            <div class="toggle-knob"></div>
+                        </div>
                     </div>
+                    
+                    <!-- Language Setting -->
                     <div class="setting-item">
                         <span>${i18n.t('settings.language')}</span>
-                        <select id="select-lang">
+                        <select id="select-lang" class="lang-select">
                             <option value="en" ${i18n.currentLang === 'en' ? 'selected' : ''}>English</option>
                             <option value="tr" ${i18n.currentLang === 'tr' ? 'selected' : ''}>Türkçe</option>
                         </select>
@@ -284,19 +298,36 @@ export class UIManager {
         `;
         this.root.appendChild(div);
 
-        document.getElementById('toggle-music').onclick = () => {
+        // Music Toggle Event
+        const musicBtn = div.querySelector('#toggle-music');
+        musicBtn.onclick = () => {
             this.game.audio.toggleMusic();
-            this.renderSettings();
+            musicBtn.classList.toggle('active');
         };
-        document.getElementById('toggle-sfx').onclick = () => {
+
+        // SFX Toggle Event
+        const sfxBtn = div.querySelector('#toggle-sfx');
+        sfxBtn.onclick = () => {
             this.game.audio.toggleSFX();
+            sfxBtn.classList.toggle('active');
+        };
+
+        // Language Change Event
+        div.querySelector('#select-lang').onchange = (e) => {
+            i18n.setLanguage(e.target.value);
+            div.remove(); // Close modal and re-render everything
+            this.render(gameState.currentState);
+            // Re-open settings immediately to show change
             this.renderSettings();
         };
-        document.getElementById('select-lang').onchange = (e) => {
-            i18n.setLanguage(e.target.value);
-            this.render(gameState.currentState);
-        };
+
+        // Close Button Event
         div.querySelector('.btn-close').onclick = () => div.remove();
+
+        // Click outside to close
+        div.onclick = (e) => {
+            if (e.target === div) div.remove();
+        }
     }
 
     renderPauseMenu() {

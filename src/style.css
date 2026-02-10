@@ -621,3 +621,117 @@ button[disabled] {
     border-color: rgba(255, 255, 255, 0.3);
     background: rgba(40, 40, 40, 0.9);
 }
+
+/* SETTINGS MODAL */
+.settings-modal {
+    width: 90%;
+    max-width: 400px;
+    background: rgba(10, 10, 15, 0.95);
+    border: 1px solid var(--primary);
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+.settings-header h2 {
+    font-size: 1.8rem;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-item span {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+/* Toggle Switch Style */
+.toggle-btn {
+    width: 60px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.toggle-btn.active {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.toggle-knob {
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    left: 3px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-btn.active .toggle-knob {
+    left: calc(100% - 27px);
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* Language Select Style */
+.lang-select {
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.lang-select:hover {
+    border-color: var(--primary);
+    background: rgba(0, 255, 255, 0.05);
+}
+
+.lang-select option {
+    background: #111;
+    color: #fff;
+    padding: 10px;
+}
