@@ -265,65 +265,64 @@ export class Player {
             if (this.game && this.game.platform) {
                 const platforms = this.game.platform.active;
                 for (const platform of platforms) {
-                    if (platform.userData.soldierObstacle) {
-                        const soldier = platform.userData.soldierObstacle;
+                    // Check if platform has an ACTIVE soldier
+                    if (platform.userData.hasSoldier && platform.userData.soldier && platform.userData.soldier.visible) {
+                        const soldier = platform.userData.soldier;
                         const soldierWorldPos = new THREE.Vector3();
                         soldier.getWorldPosition(soldierWorldPos);
 
-                        // Simple distance check
-                        const distance = proj.position.distanceTo(soldierWorldPos);
-                        if (distance < 1.5) { // Hit radius
-                            // Apply damage
-                            if (soldier.userData && soldier.userData.health !== undefined) {
-                                soldier.userData.health -= (proj.damage || 1);
-                            } else {
-                                // Fallback if no health defined
-                                soldier.userData = { health: 0 };
+                        // CYLINDER COLLISION (Fix for height difference)
+                        // Calculate horizontal distance only (XZ)
+                        const dx = proj.position.x - soldierWorldPos.x;
+                        const dz = proj.position.z - soldierWorldPos.z;
+                        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
+
+                        // Check height (Projectile must be within soldier height range -0.5 - 2.5)
+                        const dy = proj.position.y - soldierWorldPos.y;
+                        const hitHeight = dy > -0.5 && dy < 2.5; // Generous height box (floor to head)
+
+                        // Hit Radius ~1.0
+                        if (distanceXZ < 1.0 && hitHeight) {
+                            hitSoldier = true;
+
+                            // Apply damage to Shared Data
+                            const data = platform.userData.soldierData;
+                            data.health -= (proj.damage || 10);
+
+                            // Update Health Bar UI
+                            if (platform.userData.healthBar) {
+                                const hpPercent = Math.max(0, data.health / data.maxHealth);
+                                platform.userData.healthBar.scale.setX(hpPercent);
                             }
 
-                            if (soldier.userData.health <= 0) {
+                            if (data.health <= 0) {
                                 // KILL SOLDIER!
-                                console.log('💥 SOLDIER ELIMINATED!');
+                                // console.log('💥 SOLDIER ELIMINATED!');
 
                                 // Explosion effect
                                 if (vfx) {
-                                    vfx.emitBurst(soldierWorldPos, 0xff0000, 30, 0.3);
+                                    vfx.emitBurst(soldierWorldPos, 0xff0000, 20, 0.5);
                                 }
 
                                 // POOLING: Hide instead of remove
                                 soldier.visible = false;
                                 platform.userData.hasSoldier = false;
 
-                                // Reset for next usage
-                                if (soldier.userData.healthBar) {
-                                    soldier.userData.healthBar.scale.x = 1;
-                                }
-
                                 // Coin Reward Logic
                                 this.killCount++;
-                                if (this.killCount % 3 === 0) {
-                                    if (this.game && this.game.progression) {
-                                        this.game.progression.addCoin(1);
-                                        console.log('🪙 Coin awarded for 3 kills!');
-                                        // Optional: Float coin text or sound
-                                    }
+                                if (this.killCount % 1 === 0) { // Every kill
+                                    this.game.score.addBonus(50);
+                                    this.game.progression.addCoin(5);
                                 }
                             } else {
-                                console.log(`💥 Soldier Hit! HP: ${soldier.userData.health}`);
-                                // Hit effect (smaller)
+                                // Hit effect (sparks)
                                 if (vfx) {
-                                    vfx.emitBurst(soldierWorldPos, 0xffaa00, 10, 0.1);
-                                }
-
-                                // Update Health Bar
-                                if (soldier.userData.healthBar) {
-                                    const maxHealth = soldier.userData.maxHealth || 11;
-                                    const healthPercent = Math.max(0, soldier.userData.health / maxHealth);
-                                    soldier.userData.healthBar.scale.x = healthPercent;
+                                    vfx.emitBurst(soldierWorldPos, 0xffff00, 5, 0.1);
                                 }
                             }
 
-                            hitSoldier = true; // Projectile hits something
+                            // Projectile hit something, destroy it
+                            // Break inner loop (platforms)
                             break;
                         }
                     }

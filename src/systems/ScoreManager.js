@@ -27,6 +27,10 @@ export class ScoreManager {
         // We'll manage bonuses in a separate variable to apply formula at end or during update.
     }
 
+    addBonus(amount) {
+        this.currentScore += amount;
+    }
+
     addPerfectShiftBonus() {
         this.currentScore += CONFIG.SCORING.PERFECT_SHIFT_BONUS;
         this.comboCount++;
