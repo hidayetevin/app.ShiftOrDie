@@ -51,7 +51,7 @@ export class MarketModal {
                 item.className = `market-item ${isSelected ? 'selected' : ''}`;
                 item.innerHTML = `
                     <div class="item-preview skin-preview">
-                        <img src="models/md2/ratamahatta/skins/${skin.texture}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="models/md2/ratamahatta/skins/Shop/${skin.shop}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div class="item-info">
                         <h3>${skin.name}</h3>
@@ -69,7 +69,7 @@ export class MarketModal {
                 item.className = `market-item ${isSelected ? 'selected' : ''}`;
                 item.innerHTML = `
                     <div class="item-preview weapon-preview">
-                        <div style="width: 50px; height: 50px; background: #${weapon.color.toString(16).padStart(6, '0')}; border-radius: 5px;"></div>
+                        <img src="models/md2/ratamahatta/Weapons/${weapon.shop}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div class="item-info">
                         <h3>${weapon.name}</h3>
