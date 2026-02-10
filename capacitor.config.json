@@ -1,5 +1,21 @@
 {
   "appId": "com.shiftordie.app",
   "appName": "Run Or Die",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "StatusBar": {
+      "visible": false,
+      "style": "Dark",
+      "backgroundColor": "#00000000",
+      "overlaysWebView": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#000000",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
 }
