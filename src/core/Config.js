@@ -16,8 +16,8 @@ export const CONFIG = {
         SPAWN_INTERVAL: 1.5,
         SPAWN_DISTANCE: 20,
         DESPAWN_DISTANCE: -10,
-        POOL_SIZE: 30,
-        MAX_ACTIVE: 15
+        POOL_SIZE: 50,
+        MAX_ACTIVE: 25
     },
     DIFFICULTY: {
         SPEED: {

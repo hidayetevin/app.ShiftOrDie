@@ -11,13 +11,13 @@ export class PlatformManager {
         this.active = [];
         this.lastSpawnZ = CONFIG.PLATFORM.SPAWN_DISTANCE;
         this.timeSinceLastSpawn = 0;
-        this.soldierModel = null; // Will store cloneable soldier model
-
-        this.loadSoldierModel();
-        this.initPool();
-
+        this.soldierModel = null;
         this.enemyProjectiles = [];
         this.game = null;
+        this.loaded = false; // Flag to check if pool is ready
+
+        this.loadSoldierModel();
+        // initPool() removed from here - will be called by Game.js
     }
 
     setGame(game) {
@@ -28,141 +28,208 @@ export class PlatformManager {
         const loader = new GLTFLoader();
         loader.load('/models/gltf/Soldier.glb', (gltf) => {
             this.soldierModel = gltf.scene;
-            this.soldierModel.scale.set(1.2, 1.2, 1.2); // 3x larger
-            console.log('✅ Soldier obstacle model loaded');
-        }, undefined, (error) => {
-            console.error('❌ Error loading Soldier model:', error);
-        });
+            this.soldierModel.scale.set(1.2, 1.2, 1.2);
+            console.log('✅ Soldier model loaded');
+        }, undefined, (err) => console.error(err));
     }
 
-    initPool() {
-        const geometry = new THREE.BoxGeometry(
-            CONFIG.LANE.WIDTH,
-            CONFIG.PLATFORM.HEIGHT,
-            CONFIG.PLATFORM.LENGTH
-        );
+    /**
+     * Async Pool Initializer
+     * Fills the pool over multiple frames.
+     * STRICT POOLING: Pre-allocates Soldiers and Materials to avoid runtime lag.
+     */
+    initPoolAsync(onProgress, onComplete) {
+        if (this.loaded) {
+            if (onProgress) onProgress(100);
+            if (onComplete) onComplete();
+            return;
+        }
 
-        // Load texture (from the cube HTML example)
+        console.log('🔄 Starting Zero-Allocation Pool Initialization...');
+
+        // --- SHARED RESOURCES (Create ONCE) ---
+
+        // 1. Geometries
+        const platformGeo = new THREE.BoxGeometry(CONFIG.LANE.WIDTH, CONFIG.PLATFORM.HEIGHT, CONFIG.PLATFORM.LENGTH);
+        const cubeGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        const hpBgGeo = new THREE.PlaneGeometry(1.0, 0.15);
+        const hpFgGeo = new THREE.PlaneGeometry(0.95, 0.1);
+        hpFgGeo.translate(0.95 / 2, 0, 0); // Anchor fix for scaling
+
+        // 2. Materials
         const textureLoader = new THREE.TextureLoader();
-        const crateTexture = textureLoader.load('/textures/crate.gif', (texture) => {
-            texture.colorSpace = THREE.SRGBColorSpace;
-            console.log('✅ Crate texture loaded');
-        });
+        const crateTexture = textureLoader.load('/textures/crate.gif');
+        crateTexture.colorSpace = THREE.SRGBColorSpace;
 
-        // Create cube geometry for obstacles
-        const cubeSize = 0.8;
-        const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        // Shared Materials
+        const mats = {
+            base: new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3, depthWrite: false }),
+            crate: new THREE.MeshBasicMaterial({ map: crateTexture }),
+            jumpable: new THREE.MeshBasicMaterial({ map: crateTexture, color: 0xaaaaaa }),
+            hpBg: new THREE.MeshBasicMaterial({ color: 0x000000 }),
+            hpFg: new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        };
 
-        // Create smaller cube for jumpable obstacles (gray crates on safe lanes)
-        const jumpableSize = cubeSize; // Same size as regular cubes
-        const jumpableGeometry = new THREE.BoxGeometry(jumpableSize, jumpableSize, jumpableSize);
+        // Loop vars
+        let createdCount = 0;
+        const totalToCreate = CONFIG.PLATFORM.POOL_SIZE;
 
-        for (let i = 0; i < CONFIG.PLATFORM.POOL_SIZE; i++) {
-            const platformGroup = new THREE.Group();
+        const processChunk = () => {
+            const startTime = performance.now();
 
-            // Base platform (invisible or minimal)
-            const baseMaterial = new THREE.MeshStandardMaterial({
-                color: 0x00ff00,
-                transparent: true,
-                opacity: 0.3
-            });
-            const baseMesh = new THREE.Mesh(geometry, baseMaterial);
-            baseMesh.receiveShadow = true;
-            baseMesh.visible = false;
-            platformGroup.add(baseMesh);
-
-            // Obstacle cubes (using textured material like HTML example)
-            const cubes = [];
-            const numPositions = 4; // 4 positions along the platform
-            const spacing = CONFIG.PLATFORM.LENGTH / (numPositions + 1);
-
-            for (let j = 0; j < numPositions; j++) {
-                // Random stack height (1, 2, or 3 cubes high)
-                const stackHeight = Math.floor(Math.random() * 3) + 1;
-
-                for (let k = 0; k < stackHeight; k++) {
-                    const cubeMat = new THREE.MeshBasicMaterial({ map: crateTexture });
-                    const cube = new THREE.Mesh(cubeGeometry, cubeMat);
-                    cube.castShadow = true;
-                    cube.receiveShadow = true;
-
-                    // Position: horizontal (j), vertical stack (k)
-                    cube.position.x = 0;
-                    cube.position.y = (cubeSize / 2) + (k * cubeSize);
-                    cube.position.z = -CONFIG.PLATFORM.LENGTH / 2 + spacing * (j + 1);
-
-                    // Static cubes - no rotation
-                    cube.rotation.set(0, 0, 0);
-
-                    cubes.push(cube);
-                    platformGroup.add(cube);
-                }
+            // Process for max 12ms per frame (slightly more budget for loading)
+            while (performance.now() - startTime < 12 && createdCount < totalToCreate) {
+                this.createSinglePlatform(platformGeo, cubeGeo, hpBgGeo, hpFgGeo, mats);
+                createdCount++;
             }
 
-            // Jumpable obstacle (gray crate on safe lanes)
-            // Will be positioned randomly in center of platform
-            const jumpableMat = new THREE.MeshBasicMaterial({
-                map: crateTexture,
-                color: 0xaaaaaa // Light gray tint for better visibility
-            });
-            const jumpableCube = new THREE.Mesh(jumpableGeometry, jumpableMat);
-            jumpableCube.castShadow = true;
-            jumpableCube.receiveShadow = true;
-            jumpableCube.position.set(0, jumpableSize / 2, 0);
-            jumpableCube.visible = false;
-            platformGroup.add(jumpableCube);
+            const percent = Math.floor((createdCount / totalToCreate) * 100);
+            if (onProgress) onProgress(percent);
 
-            platformGroup.visible = false;
-            platformGroup.userData = {
-                isDangerous: false,
-                lane: 0,
-                baseMesh: baseMesh,
-                cubes: cubes,
-                jumpableCube: jumpableCube,
-                soldierObstacle: null, // Will hold cloned Soldier model
-                hasJumpableObstacle: false
-            };
+            if (createdCount < totalToCreate) {
+                requestAnimationFrame(processChunk);
+            } else {
+                this.loaded = true;
+                console.log(`✅ Pool Ready: ${this.pool.length} objects. Zero runtime allocations active.`);
+                if (onComplete) onComplete();
+            }
+        };
 
-            this.pool.push(platformGroup);
-            this.scene.add(platformGroup);
-        }
+        requestAnimationFrame(processChunk);
     }
+
+    createSinglePlatform(platformGeo, cubeGeo, hpBgGeo, hpFgGeo, mats) {
+        const platformGroup = new THREE.Group();
+        const cubeSize = 0.8;
+
+        // 1. Base Mesh
+        const baseMesh = new THREE.Mesh(platformGeo, mats.base);
+        baseMesh.visible = false;
+        // Optimization: Disable matrix auto update for static child objects if possible, 
+        // but since we move the parent group, children move with it.
+        platformGroup.add(baseMesh);
+
+        // 2. Obstacle Cubes (Pool of 4 stacks * 3 height = 12 cubes max)
+        const cubes = [];
+        const numPositions = 4;
+        const spacing = CONFIG.PLATFORM.LENGTH / (numPositions + 1);
+
+        for (let j = 0; j < numPositions; j++) {
+            const stackHeight = 3; // Max height to pre-allocate
+            for (let k = 0; k < stackHeight; k++) {
+                const cube = new THREE.Mesh(cubeGeo, mats.crate);
+
+                cube.position.set(0, (cubeSize / 2) + (k * cubeSize), -CONFIG.PLATFORM.LENGTH / 2 + spacing * (j + 1));
+                cube.rotation.set(0, 0, 0);
+                cube.visible = false; // Hidden by default
+
+                cubes.push(cube);
+                platformGroup.add(cube);
+            }
+        }
+
+        // 3. Jumpable Crate (Single interaction object)
+        const jumpableCube = new THREE.Mesh(cubeGeo, mats.jumpable);
+        jumpableCube.position.set(0, cubeSize / 2, 0);
+        jumpableCube.visible = false;
+        platformGroup.add(jumpableCube);
+
+        // 4. Soldier (Pre-allocate 1 per platform)
+        let soldierRef = null;
+        let hpBarRef = null;
+
+        if (this.soldierModel) {
+            const soldier = SkeletonUtils.clone(this.soldierModel);
+            soldier.position.set(0, 0, 0);
+            soldier.rotation.y = Math.PI;
+            soldier.visible = false;
+
+            // Health Bar
+            const hpGroup = new THREE.Group();
+            hpGroup.position.set(0, 2.2, 0);
+
+            const bg = new THREE.Mesh(hpBgGeo, mats.hpBg);
+            const fg = new THREE.Mesh(hpFgGeo, mats.hpFg);
+            fg.position.z = 0.01;
+            fg.position.x = -(1.0 - 0.05) / 2; // Anchor already fixed in geometry translate
+
+            hpGroup.add(bg);
+            hpGroup.add(fg);
+            soldier.add(hpGroup);
+
+            platformGroup.add(soldier);
+
+            soldierRef = soldier;
+            hpBarRef = fg;
+        }
+
+        platformGroup.visible = false;
+
+        // User Data Structure
+        platformGroup.userData = {
+            lane: 0,
+            baseMesh: baseMesh,
+            cubes: cubes,           // Array of 12 meshes
+            jumpableCube: jumpableCube,
+            soldier: soldierRef,    // The persistent soldier mesh
+            healthBar: hpBarRef,
+
+            // Logic Flags
+            isDangerous: false,
+            hasJumpableObstacle: false,
+            hasSoldier: false,
+
+            // Dynamic Data
+            soldierData: { health: 11, maxHealth: 11, lastShotTime: 0 }
+        };
+
+        this.pool.push(platformGroup);
+        this.scene.add(platformGroup);
+    }
+
+    // Old initPool removed
+
+
 
     update(deltaTime, gameSpeed) {
         this.timeSinceLastSpawn += deltaTime;
 
-        // Move active platforms & handle soldier shooting
+        // Move active platforms
         for (let i = this.active.length - 1; i >= 0; i--) {
             const platform = this.active[i];
             platform.position.z -= gameSpeed * deltaTime;
 
             // Soldier Shooting Logic
-            if (platform.userData.soldierObstacle && platform.visible) {
-                const soldier = platform.userData.soldierObstacle;
-                soldier.userData.lastShotTime += deltaTime;
-
-                // Fire only if within range and cooldown passed
-                // Range: Z < 30 (close enough to see) and Z > 5 (not passed player yet)
-                if (platform.position.z < 30 && platform.position.z > 2 && soldier.userData.lastShotTime > 1.5) {
-                    this.fireEnemyBullet(platform, soldier);
-                    soldier.userData.lastShotTime = 0; // Reset timer
-                }
+            if (platform.visible && platform.userData.hasSoldier && platform.userData.soldier.visible) {
+                this.updateSoldierLogic(platform, deltaTime);
             }
 
-            // Recycle platforms behind camera
+            // Recycle
             if (platform.position.z < CONFIG.PLATFORM.DESPAWN_DISTANCE) {
                 this.recycle(platform, i);
             }
         }
 
-        // Spawn new rows
+        // Spawn
         if (this.timeSinceLastSpawn >= CONFIG.PLATFORM.SPAWN_INTERVAL) {
             this.spawnRow();
             this.timeSinceLastSpawn = 0;
         }
 
-        // Update Enemy Projectiles
+        // Projectiles
         this.updateEnemyProjectiles(deltaTime);
+    }
+
+    updateSoldierLogic(platform, deltaTime) {
+        const data = platform.userData.soldierData;
+        const soldier = platform.userData.soldier;
+
+        data.lastShotTime += deltaTime;
+
+        if (platform.position.z < 30 && platform.position.z > 2 && data.lastShotTime > 1.5) {
+            this.fireEnemyBullet(platform, soldier);
+            data.lastShotTime = 0;
+        }
     }
 
     fireEnemyBullet(platform, soldier) {
@@ -236,120 +303,88 @@ export class PlatformManager {
     }
 
     spawnRow() {
-        // Spawn one row (3 platforms)
+        if (this.pool.length < CONFIG.LANE.COUNT) {
+            // Optional: Force expand pool or just skip
+            return;
+        }
+
         for (let i = 0; i < CONFIG.LANE.COUNT; i++) {
-            if (this.pool.length === 0) {
-                console.warn('Pool exhausted!');
-                return;
-            }
             const platform = this.pool.pop();
-
-            // SET POSITION FIRST (before adding obstacles!)
-            platform.position.set(
-                CONFIG.LANE.POSITIONS[i],
-                0,
-                CONFIG.PLATFORM.SPAWN_DISTANCE + 10
-            );
-
-            const status = this.ruleManager.getLaneStatus(i);
-            const isDangerous = (status === 'hazard');
-
-            platform.userData.isDangerous = isDangerous;
-            platform.userData.lane = i;
-
-            // Reset Jumpable Cube Visibility (Important!)
-            if (platform.userData.jumpableCube) {
-                platform.userData.jumpableCube.visible = false;
-            }
-            platform.userData.hasJumpableObstacle = false;
-
-            // Show/hide cubes based on danger
-            if (platform.userData.cubes) {
-                platform.userData.cubes.forEach(cube => {
-                    cube.visible = isDangerous;
-                });
-            }
-
-            // Jumpable obstacles ONLY on SAFE lanes (40% chance)
-            platform.userData.hasJumpableObstacle = false;
-
-            // Clean up old soldier obstacle if exists
-            if (platform.userData.soldierObstacle) {
-                platform.remove(platform.userData.soldierObstacle);
-                platform.userData.soldierObstacle = null;
-            }
-
-            if (!isDangerous && Math.random() < 0.4) {
-                platform.userData.hasJumpableObstacle = true;
-
-                // Randomly choose: 50% soldier, 50% gray cube
-                const useSoldier = this.soldierModel && Math.random() < 0.5;
-
-                if (useSoldier) {
-                    // Hide gray cube geometry, show soldier visual instead
-                    if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
-                        platform.userData.jumpableCube.visible = false;
-                    }
-
-                    // Clone soldier properly (SkeletonUtils for animated models)
-                    const soldierClone = SkeletonUtils.clone(this.soldierModel);
-                    soldierClone.position.set(0, 0, 0); // At platform origin
-                    soldierClone.rotation.y = Math.PI; // Face camera
-
-                    platform.add(soldierClone);
-                    soldierClone.userData = { health: 11, maxHealth: 11, lastShotTime: 0 }; // Default soldier health and shooting stats
-
-                    // Create Health Bar
-                    const barWidth = 1.0;
-                    const barHeight = 0.15;
-                    const healthBarGroup = new THREE.Group();
-                    healthBarGroup.position.set(0, 2.2, 0); // Above soldier head
-
-                    // Background (Black)
-                    const bgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
-                    const bgMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-                    const bgMesh = new THREE.Mesh(bgGeo, bgMat);
-
-                    // Kill (Red)
-                    const fgGeo = new THREE.PlaneGeometry(barWidth - 0.05, barHeight - 0.05);
-                    const fgMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                    const fgMesh = new THREE.Mesh(fgGeo, fgMat);
-                    fgMesh.position.z = 0.01; // Slightly in front
-                    // Shift anchor to left for scaling
-                    fgMesh.geometry.translate((barWidth - 0.05) / 2, 0, 0);
-                    fgMesh.position.x = -(barWidth - 0.05) / 2;
-
-                    healthBarGroup.add(bgMesh);
-                    healthBarGroup.add(fgMesh);
-
-                    soldierClone.add(healthBarGroup);
-                    soldierClone.userData.healthBar = fgMesh;
-
-                    platform.userData.soldierObstacle = soldierClone;
-
-                    console.log('🎖️ Soldier obstacle spawned at Z:', platform.position.z.toFixed(1));
-                } else {
-                    // Show gray cube
-                    if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
-                        platform.userData.jumpableCube.visible = true;
-                        console.log('📦 Cube at Z:', platform.position.z.toFixed(1));
-                    }
-                }
-            } else {
-                // No obstacle
-                if (platform.userData.jumpableCube && platform.userData.jumpableCube.geometry) {
-                    platform.userData.jumpableCube.visible = false;
-                }
-            }
-
-            // Show/hide base platform
-            if (platform.userData.baseMesh) {
-                // Hide safe platforms completely - only show obstacles
-                platform.userData.baseMesh.visible = false;
-            }
+            this.setupPlatform(platform, i);
 
             platform.visible = true;
             this.active.push(platform);
+        }
+    }
+
+    setupPlatform(platform, laneIndex) {
+        // 1. Position
+        platform.position.set(
+            CONFIG.LANE.POSITIONS[laneIndex],
+            0,
+            CONFIG.PLATFORM.SPAWN_DISTANCE + 10
+        );
+        platform.userData.lane = laneIndex;
+
+        // 2. Logic
+        const status = this.ruleManager.getLaneStatus(laneIndex);
+        const isDangerous = (status === 'hazard');
+        platform.userData.isDangerous = isDangerous;
+
+        // 3. Reset Visuals (Hide All first)
+        platform.userData.baseMesh.visible = false; // Only show debug/base if needed
+        platform.userData.jumpableCube.visible = false;
+        if (platform.userData.soldier) platform.userData.soldier.visible = false;
+        platform.userData.cubes.forEach(c => c.visible = false);
+
+        platform.userData.hasSoldier = false;
+        platform.userData.hasJumpableObstacle = false;
+
+        if (isDangerous) {
+            // Hazard Lane: Activate Random Cubes
+            // We have 12 cubes (4 stacks of 3). Pick a pattern.
+            // Simple: 1 stack of random height per row
+            const numRows = 4;
+            for (let r = 0; r < numRows; r++) {
+                const h = Math.floor(Math.random() * 3) + 1; // 1-3 height
+                for (let k = 0; k < h; k++) {
+                    // Index mapping: r is the position index (0-3), k is height (0-2)
+                    // In createSinglePlatform: cubes.push(cube) inner loop is k, outer is j (pos)
+                    // Index = (r * 3) + k
+                    const idx = r * 3 + k;
+                    if (platform.userData.cubes[idx]) {
+                        platform.userData.cubes[idx].visible = true;
+                    }
+                }
+            }
+        } else {
+            // Safe Lane: Chance for obstacle
+            if (Math.random() < 0.4) {
+                this.setupObstacle(platform);
+            }
+        }
+    }
+
+    setupObstacle(platform) {
+        // 50% Soldier, 50% Jumpable
+        // Only if soldier model exists
+        const useSoldier = platform.userData.soldier && Math.random() < 0.5;
+
+        if (useSoldier) {
+            platform.userData.hasSoldier = true;
+            const soldier = platform.userData.soldier;
+            soldier.visible = true;
+
+            // Reset Stats
+            platform.userData.soldierData.health = 11;
+            platform.userData.soldierData.lastShotTime = 0;
+            if (platform.userData.healthBar) platform.userData.healthBar.scale.x = 1;
+
+            console.log('Use Pooled Soldier');
+        } else {
+            // Jumpable Crate
+            platform.userData.hasJumpableObstacle = true;
+            platform.userData.jumpableCube.visible = true;
         }
     }
 

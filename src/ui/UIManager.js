@@ -67,7 +67,7 @@ export class UIManager {
         `;
         this.root.appendChild(div);
 
-        document.getElementById('btn-play').onclick = () => gameState.transition(GameStates.PLAYING);
+        document.getElementById('btn-play').onclick = () => this.game.startGameWithLoading();
         document.getElementById('btn-tasks').onclick = () => this.renderTasks();
         document.getElementById('btn-settings').onclick = () => this.renderSettings();
         document.getElementById('btn-market').onclick = () => new MarketModal(this.game);

@@ -290,10 +290,14 @@ export class Player {
                                     vfx.emitBurst(soldierWorldPos, 0xff0000, 30, 0.3);
                                 }
 
-                                // Remove soldier from platform
-                                platform.remove(soldier);
-                                platform.userData.soldierObstacle = null;
-                                platform.userData.hasJumpableObstacle = false;
+                                // POOLING: Hide instead of remove
+                                soldier.visible = false;
+                                platform.userData.hasSoldier = false;
+
+                                // Reset for next usage
+                                if (soldier.userData.healthBar) {
+                                    soldier.userData.healthBar.scale.x = 1;
+                                }
 
                                 // Coin Reward Logic
                                 this.killCount++;

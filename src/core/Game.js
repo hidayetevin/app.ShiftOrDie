@@ -58,8 +58,8 @@ class Game {
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.enabled = false;
+        // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         // Tone Mapping & Exposure (from Walk Example)
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -126,6 +126,51 @@ class Game {
 
         // Start loop
         this.animate();
+    }
+
+    /**
+     * Called when user clicks PLAY.
+     * Shows loading screen -> Loads Pool -> Starts Game
+     */
+    startGameWithLoading() {
+        // 1. Show Loading Screen
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.display = 'flex';
+            screen.style.opacity = '1';
+        }
+
+        // 2. Load Assets (Pool)
+        this.platform.initPoolAsync(
+            (percent) => {
+                this.updateLoadingUI(percent);
+            },
+            () => {
+                this.onLoadingComplete();
+            }
+        );
+    }
+
+    updateLoadingUI(percent) {
+        const bar = document.getElementById('loading-bar');
+        const text = document.getElementById('loading-text');
+        if (bar) bar.style.width = percent + '%';
+        if (text) text.innerText = percent + '%';
+    }
+
+    onLoadingComplete() {
+        // 3. Hide Loading Screen
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => screen.style.display = 'none', 300);
+        }
+
+        console.log('✅ Pool Ready. Starting Gameplay.');
+
+        // 4. Transition to Playing
+        this.player.setInvulnerable(CONFIG.PLAYER.INVULNERABLE_DURATION);
+        gameState.transition(GameStates.PLAYING);
     }
 
     onStateChange(newState, oldState) {
