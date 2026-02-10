@@ -20,6 +20,7 @@ export class Player {
         this.currentAnimation = null; // Will be set when character loads
         this.projectiles = []; // Track active projectiles
         this.killCount = 0; // Track soldier kills for coin rewards
+        this.tempVec3 = new THREE.Vector3(); // GC fix
         this.health = 10;
         this.maxHealth = 10;
 
@@ -268,8 +269,9 @@ export class Player {
                     // Check if platform has an ACTIVE soldier
                     if (platform.userData.hasSoldier && platform.userData.soldier && platform.userData.soldier.visible) {
                         const soldier = platform.userData.soldier;
-                        const soldierWorldPos = new THREE.Vector3();
-                        soldier.getWorldPosition(soldierWorldPos);
+                        // GC Optimization: Reuse vector
+                        soldier.getWorldPosition(this.tempVec3);
+                        const soldierWorldPos = this.tempVec3;
 
                         // CYLINDER COLLISION (Fix for height difference)
                         // Calculate horizontal distance only (XZ)

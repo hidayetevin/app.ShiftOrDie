@@ -28,8 +28,18 @@ export class PlatformManager {
         const loader = new GLTFLoader();
         loader.load('/models/gltf/Soldier.glb', (gltf) => {
             this.soldierModel = gltf.scene;
+            this.soldierAnimations = gltf.animations; // Store animations
             this.soldierModel.scale.set(1.2, 1.2, 1.2);
-            console.log('✅ Soldier model loaded');
+
+            // Traverse to enable shadows
+            this.soldierModel.traverse(c => {
+                if (c.isMesh) {
+                    c.castShadow = true;
+                    c.receiveShadow = true;
+                }
+            });
+
+            console.log('✅ Soldier model loaded with animations:', this.soldierAnimations.length);
         }, undefined, (err) => console.error(err));
     }
 
@@ -137,12 +147,23 @@ export class PlatformManager {
         // 4. Soldier (Pre-allocate 1 per platform)
         let soldierRef = null;
         let hpBarRef = null;
+        let mixer = null;
 
         if (this.soldierModel) {
             const soldier = SkeletonUtils.clone(this.soldierModel);
             soldier.position.set(0, 0, 0);
             soldier.rotation.y = Math.PI;
             soldier.visible = false;
+
+            // ANIMATION SETUP
+            if (this.soldierAnimations && this.soldierAnimations.length > 0) {
+                mixer = new THREE.AnimationMixer(soldier);
+                const runClip = THREE.AnimationClip.findByName(this.soldierAnimations, 'Run') || this.soldierAnimations[1]; // Usually Run is index 1 or 3
+                if (runClip) {
+                    const action = mixer.clipAction(runClip);
+                    action.play();
+                }
+            }
 
             // Health Bar
             const hpGroup = new THREE.Group();
@@ -173,6 +194,7 @@ export class PlatformManager {
             jumpableCube: jumpableCube,
             soldier: soldierRef,    // The persistent soldier mesh
             healthBar: hpBarRef,
+            mixer: mixer, // Store Mixer
 
             // Logic Flags
             isDangerous: false,
@@ -199,9 +221,14 @@ export class PlatformManager {
             const platform = this.active[i];
             platform.position.z -= gameSpeed * deltaTime;
 
-            // Soldier Shooting Logic
+            // Update Soldier (Logic + Animation)
             if (platform.visible && platform.userData.hasSoldier && platform.userData.soldier.visible) {
                 this.updateSoldierLogic(platform, deltaTime);
+
+                // Update Animation
+                if (platform.userData.mixer) {
+                    platform.userData.mixer.update(deltaTime);
+                }
             }
 
             // Recycle
