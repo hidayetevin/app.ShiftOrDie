@@ -57,13 +57,13 @@ class Game {
             powerPreference: 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Reduced for mobile performance
         this.renderer.shadowMap.enabled = false;
         // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         // Tone Mapping & Exposure (from Walk Example)
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 0.8;
+        this.renderer.toneMappingExposure = 1.0; // Slightly increased as bloom is gone
 
         document.getElementById('game-container').appendChild(this.renderer.domElement);
 
@@ -84,11 +84,14 @@ class Game {
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
+        // BLOOM DISABLED FOR MOBILE PERFORMANCE
+        /*
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
             1.5, 0.4, 0.85
         );
         this.composer.addPass(this.bloomPass);
+        */
 
         // Systems Initialization
         this.player = new Player(this.scene);

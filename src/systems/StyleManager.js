@@ -34,9 +34,11 @@ export class StyleManager {
         this.game.scene.background = new THREE.Color(config.background);
 
         // Update Post-Processing (Bloom)
-        this.game.bloomPass.strength = config.bloom.strength;
-        this.game.bloomPass.radius = config.bloom.radius;
-        this.game.bloomPass.threshold = config.bloom.threshold;
+        if (this.game.bloomPass) {
+            this.game.bloomPass.strength = config.bloom.strength;
+            this.game.bloomPass.radius = config.bloom.radius;
+            this.game.bloomPass.threshold = config.bloom.threshold;
+        }
 
         // Update materials of everything in the scene?
         // In a real game, we'd iterate or use global uniforms.
