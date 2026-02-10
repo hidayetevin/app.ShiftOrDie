@@ -735,3 +735,112 @@ button[disabled] {
     color: #fff;
     padding: 10px;
 }
+
+/* GAME OVER STYLES */
+.game-over-scores {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    text-align: center;
+    width: 100%;
+}
+
+.score-box {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    width: 80%;
+    max-width: 300px;
+}
+
+.score-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.score-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    line-height: 1;
+}
+
+.score-value.highlight {
+    color: var(--primary);
+    text-shadow: 0 0 20px var(--primary);
+    font-size: 3rem;
+}
+
+.high-score-display {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.high-score-val {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* Delayed Buttons Area */
+.secondary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease;
+    pointer-events: none;
+    /* Tıklamayı engelle */
+}
+
+.secondary-actions.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    /* Tıklamayı aç */
+}
+
+/* Continue Button with Icon */
+.btn-continue-ad {
+    background: linear-gradient(135deg, #00C851, #007E33);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 15px 30px;
+    border-radius: 50px;
+    border: none;
+    box-shadow: 0 0 20px rgba(0, 200, 81, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-transform: uppercase;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-continue-ad:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 200, 81, 0.6);
+}
+
+.ad-icon {
+    font-size: 1.4rem;
+}

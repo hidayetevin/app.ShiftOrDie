@@ -131,32 +131,66 @@ export class UIManager {
     renderGameOver() {
         const div = document.createElement('div');
         div.className = 'ui-screen gameover-screen';
+
         const finalScore = this.game.score.handleGameOver();
         const isNewRecord = this.game.score.isNewRecord;
         const canContinue = !this.game.ads.usedContinueThisRun;
+        const highScore = this.game.score.highScore;
 
         div.innerHTML = `
-            ${isNewRecord ? `<h2 class="new-record">${i18n.t('game.new_record')}</h2>` : ''}
-            <h1>${i18n.t('game.game_over')}</h1>
-            <div class="scores">
-                <p>${i18n.t('game.your_score')}: <span>${finalScore.toLocaleString()}</span></p>
-                <p>${i18n.t('game.high_score')}: <span>${this.game.score.highScore.toLocaleString()}</span></p>
+            ${isNewRecord ? `<h2 class="new-record" style="color:var(--accent); text-shadow:0 0 20px var(--accent); margin-bottom:10px;">${i18n.t('game.new_record')}</h2>` : ''}
+            
+            <h1 style="font-size: 3rem; margin-bottom: 20px;">${i18n.t('game.game_over')}</h1>
+            
+            <div class="game-over-scores">
+                <div class="score-box">
+                    <span class="score-label">${i18n.t('game.your_score')}</span>
+                    <span class="score-value highlight">${finalScore.toLocaleString()}</span>
+                </div>
+                
+                <div class="high-score-display">
+                    <span class="score-label" style="font-size:0.8rem; margin:0;">${i18n.t('game.high_score')}:</span>
+                    <span class="high-score-val">${highScore.toLocaleString()}</span>
+                </div>
             </div>
-            <div class="menu-buttons">
-                <button id="btn-continue" class="btn-continue" ${!canContinue ? 'disabled' : ''}>
-                    ${canContinue ? i18n.t('game.continue') + ' (AD)' : 'No Continues Left'}
+
+            <div class="menu-buttons" style="width: 100%; max-width: 300px;">
+                ${canContinue ? `
+                <button id="btn-continue" class="btn-continue-ad">
+                    ${i18n.t('game.watch_continue')} <span class="ad-icon">📺</span>
                 </button>
-                <button id="btn-restart" class="btn-main">${i18n.t('game.restart')}</button>
-                <button id="btn-menu">${i18n.t('game.quit')}</button>
+                ` : '<div style="margin-bottom:20px; color:rgba(255,255,255,0.5); font-style:italic;">No Continues Left</div>'}
+                
+                <div id="secondary-actions" class="secondary-actions">
+                    <button id="btn-restart" class="btn-primary-large" style="height: 60px; font-size: 1.2rem;">${i18n.t('game.restart')}</button>
+                    <button id="btn-menu" class="btn-secondary" style="height: 50px;">${i18n.t('game.quit')}</button>
+                </div>
             </div>
         `;
         this.root.appendChild(div);
 
-        document.getElementById('btn-restart').onclick = () => gameState.transition(GameStates.PLAYING);
-        document.getElementById('btn-menu').onclick = () => gameState.transition(GameStates.MENU);
+        // Continue Button Event
         if (canContinue) {
-            document.getElementById('btn-continue').onclick = () => this.game.ads.handleContinue();
+            const continueBtn = document.getElementById('btn-continue');
+            if (continueBtn) {
+                continueBtn.onclick = () => this.game.ads.handleContinue();
+            }
         }
+
+        // Reveal secondary buttons after 2 seconds
+        setTimeout(() => {
+            const secActions = document.getElementById('secondary-actions');
+            if (secActions) {
+                secActions.classList.add('visible');
+            }
+        }, 2000);
+
+        // Secondary buttons events
+        const btnRestart = document.getElementById('btn-restart');
+        const btnMenu = document.getElementById('btn-menu');
+
+        if (btnRestart) btnRestart.onclick = () => gameState.transition(GameStates.PLAYING);
+        if (btnMenu) btnMenu.onclick = () => gameState.transition(GameStates.MENU);
     }
 
     renderTasks() {
