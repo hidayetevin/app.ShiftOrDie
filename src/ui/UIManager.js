@@ -55,7 +55,7 @@ export class UIManager {
                 <span>🏆 ${this.game.score.highScore}</span>
             </div>
             
-            <p class="game-title">SHIFT OR DIE</p>
+            <p class="game-title">RUN OR DIE</p>
             
             <div class="menu-bottom-container">
                 <button id="btn-play" class="btn-primary-large">${i18n.t('menu.play')}</button>
