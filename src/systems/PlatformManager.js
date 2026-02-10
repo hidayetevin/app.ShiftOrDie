@@ -156,6 +156,8 @@ export class PlatformManager {
             soldier.visible = false;
 
             // ANIMATION SETUP
+            // DISABLED: User requested soldiers not to run (Static Pose)
+            /*
             if (this.soldierAnimations && this.soldierAnimations.length > 0) {
                 mixer = new THREE.AnimationMixer(soldier);
                 const runClip = THREE.AnimationClip.findByName(this.soldierAnimations, 'Run') || this.soldierAnimations[1]; // Usually Run is index 1 or 3
@@ -164,6 +166,7 @@ export class PlatformManager {
                     action.play();
                 }
             }
+            */
 
             // Health Bar
             const hpGroup = new THREE.Group();
@@ -373,6 +376,9 @@ export class PlatformManager {
             // Simple: 1 stack of random height per row
             const numRows = 4;
             for (let r = 0; r < numRows; r++) {
+                // REDUCED DENSITY: Only 60% of rows have blocks
+                if (Math.random() > 0.6) continue;
+
                 const h = Math.floor(Math.random() * 3) + 1; // 1-3 height
                 for (let k = 0; k < h; k++) {
                     // Index mapping: r is the position index (0-3), k is height (0-2)
@@ -386,7 +392,8 @@ export class PlatformManager {
             }
         } else {
             // Safe Lane: Chance for obstacle
-            if (Math.random() < 0.4) {
+            // REDUCED: 40% -> 25%
+            if (Math.random() < 0.25) {
                 this.setupObstacle(platform);
             }
         }
