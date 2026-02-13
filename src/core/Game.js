@@ -242,6 +242,7 @@ class Game {
 
     continueGame() {
         this.player.revive();
+        this.collision.isDead = false; // Reset collision death flag
         this.player.setInvulnerable(CONFIG.PLAYER.INVULNERABLE_DURATION);
         gameState.transition(GameStates.PLAYING);
     }
