@@ -1,6 +1,6 @@
 import { gameState, GameStates } from '../core/GameState';
 import { CONFIG } from '../core/Config';
-import { AdMob, RewardAdPluginEvents, AdLoadInfo, AdMobRewardItem } from '@capacitor-community/admob';
+import { AdMob, RewardAdPluginEvents, InterstitialAdPluginEvents } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
 export class AdManager {
@@ -8,11 +8,14 @@ export class AdManager {
         this.game = game;
         this.usedContinueThisRun = false;
         this.isNative = Capacitor.isNativePlatform();
+
         this.rewardedAdLoaded = false;
+        this.interstitialAdLoaded = false;
 
         // Callbacks
         this.onRewardSuccess = null;
         this.onRewardFail = null;
+        this.onInterstitialDismiss = null;
 
         this.init();
     }
@@ -26,19 +29,20 @@ export class AdManager {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                // testingDevices: ['YOUR_TEST_DEVICE_ID'], // Add test device ID here if testing on real device
-                initializeForTesting: false, // Set to true for test ads without ID
+                initializeForTesting: false,
             });
             console.log('AdManager: AdMob Initialized');
 
             this.setupListeners();
             this.prepareRewarded();
+            this.prepareInterstitial();
         } catch (error) {
             console.error('AdManager: Initialization failed', error);
         }
     }
 
     setupListeners() {
+        // --- Rewarded Ads Listeners ---
         AdMob.addListener(RewardAdPluginEvents.Loaded, (info) => {
             console.log('AdManager: Rewarded Ad Loaded', info);
             this.rewardedAdLoaded = true;
@@ -47,43 +51,25 @@ export class AdManager {
         AdMob.addListener(RewardAdPluginEvents.FailedToLoad, (error) => {
             console.error('AdManager: Rewarded Ad Failed to Load', error);
             this.rewardedAdLoaded = false;
-            // Retry loading after delay
-            setTimeout(() => this.prepareRewarded(), 10000);
-        });
-
-        AdMob.addListener(RewardAdPluginEvents.Showed, () => {
-            console.log('AdManager: Rewarded Ad Showed');
+            setTimeout(() => this.prepareRewarded(), 15000); // Retry later
         });
 
         AdMob.addListener(RewardAdPluginEvents.FailedToShow, (error) => {
-            console.error('AdManager: Failed to Show Ad', error);
+            console.error('AdManager: Failed to Show Rewarded Ad', error);
             if (this.onRewardFail) this.onRewardFail();
             this.cleanupCallbacks();
             gameState.transition(GameStates.GAMEOVER);
-
-            // Reload for next time
             this.prepareRewarded();
         });
 
         AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
-            console.log('AdManager: Ad Dismissed');
-            // Check if reward was NOT earned (user closed prematurely)
-            // But usually 'Rewarded' event fires before Dismissed if successful.
-            // If reward event didn't fire, we can assume failure/cancellation.
-            // However, rely on the Rewarded event to trigger success.
-            // If Dismissed happens without Reward, we treat it as fail/cancel.
-
-            // Note: We don't trigger Fail here immediately because Rewarded event might be async.
-            // But generally, Rewarded comes first.
-
-            // If we haven't triggered success yet, trigger fail
+            console.log('AdManager: Rewarded Ad Dismissed');
+            // Check if user dismissed without earning reward (fail state)
             if (this.onRewardFail) {
                 this.onRewardFail();
                 this.cleanupCallbacks();
                 gameState.transition(GameStates.GAMEOVER);
             }
-
-            // Reload for next time
             this.prepareRewarded();
         });
 
@@ -91,20 +77,48 @@ export class AdManager {
             console.log('AdManager: User Earned Reward', reward);
             if (this.onRewardSuccess) {
                 this.onRewardSuccess();
-                this.onRewardSuccess = null; // Clear to prevent double call
-                this.onRewardFail = null; // Clear fail callback too
+                this.onRewardSuccess = null; // Prevent double trigger
+                this.onRewardFail = null; // Clear fail callback
             }
-            // Game state transition happens in callback or dismissed
+        });
+
+        // --- Interstitial Ads Listeners ---
+        AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info) => {
+            console.log('AdManager: Interstitial Ad Loaded', info);
+            this.interstitialAdLoaded = true;
+        });
+
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (error) => {
+            console.error('AdManager: Interstitial Ad Failed to Load', error);
+            this.interstitialAdLoaded = false;
+            setTimeout(() => this.prepareInterstitial(), 15000); // Retry later
+        });
+
+        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+            console.log('AdManager: Interstitial Dismissed');
+            if (this.onInterstitialDismiss) {
+                this.onInterstitialDismiss();
+                this.onInterstitialDismiss = null;
+            }
+            this.prepareInterstitial();
+        });
+
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, (error) => {
+            console.error('AdManager: Failed to Show Interstitial', error);
+            // If failed, proceed as if dismissed to not block user
+            if (this.onInterstitialDismiss) {
+                this.onInterstitialDismiss();
+                this.onInterstitialDismiss = null;
+            }
+            this.prepareInterstitial();
         });
     }
 
+    // --- REWARDED ADS METHODS ---
     async prepareRewarded() {
         if (!this.isNative) return;
-
         try {
-            await AdMob.prepareRewardVideoAd({
-                adId: CONFIG.ADS.REWARDED
-            });
+            await AdMob.prepareRewardVideoAd({ adId: CONFIG.ADS.REWARDED });
             console.log('AdManager: Preparing Rewarded Ad...');
         } catch (error) {
             console.error('AdManager: Prepare Rewarded Failed', error);
@@ -119,44 +133,80 @@ export class AdManager {
         this.onRewardFail = onFail;
 
         if (!this.isNative) {
-            // Web Mock Implementation
-            this.showMockAd(onSuccess, onFail);
+            this.showMockAd(true, onSuccess, onFail);
             return;
         }
 
         if (this.rewardedAdLoaded) {
             AdMob.showRewardVideoAd().catch(error => {
-                console.error('AdManager: Show Error', error);
+                console.error('AdManager: Show Rewarded Error', error);
                 if (onFail) onFail();
                 gameState.transition(GameStates.GAMEOVER);
             });
         } else {
-            console.warn('AdManager: Ad not ready, trying to load...');
-            this.prepareRewarded().then(() => {
-                // Try one more time or just fail
-                // For better UX, maybe show spinner then fail
-                setTimeout(() => {
-                    if (onFail) onFail();
-                    gameState.transition(GameStates.GAMEOVER);
-                }, 1000);
-            });
+            console.warn('AdManager: Rewarded Ad not ready');
+            // Can try to load and show, or just fail safely
+            this.prepareRewarded();
+            // Fallback for better UX
+            setTimeout(() => {
+                if (onFail) onFail();
+                gameState.transition(GameStates.GAMEOVER);
+            }, 500);
         }
     }
 
-    showMockAd(onSuccess, onFail) {
+    // --- INTERSTITIAL ADS METHODS ---
+    async prepareInterstitial() {
+        if (!this.isNative) return;
+        try {
+            await AdMob.prepareInterstitial({ adId: CONFIG.ADS.INTERSTITIAL });
+            console.log('AdManager: Preparing Interstitial Ad...');
+        } catch (error) {
+            console.error('AdManager: Prepare Interstitial Failed', error);
+        }
+    }
+
+    showInterstitial(onDismiss) {
+        console.log('AdManager: Requesting Interstitial Ad...');
+        this.onInterstitialDismiss = onDismiss;
+
+        if (!this.isNative) {
+            this.showMockAd(false, null, null, onDismiss); // Interstitial mock
+            return;
+        }
+
+        if (this.interstitialAdLoaded) {
+            AdMob.showInterstitial().catch(error => {
+                console.error('AdManager: Show Interstitial Error', error);
+                // If error, proceed game
+                if (onDismiss) onDismiss();
+            });
+        } else {
+            console.log('AdManager: Interstitial not ready, skipping...');
+            // If not ready, don't block the user, just continue
+            if (onDismiss) onDismiss();
+            this.prepareInterstitial();
+        }
+    }
+
+    // --- MOCK ADS ---
+    showMockAd(isRewarded, onSuccess, onFail, onDismiss) {
+        // Show spinner / mock UI
+        if (isRewarded) {
+            // UI logic is handled by game state REWARDED_AD in UIManager
+        } else {
+            // For interstitial mock, we might want a quick overlay or just log
+            console.log('AdManager: Showing Mock Interstitial...');
+        }
+
         setTimeout(() => {
-            try {
+            if (isRewarded) {
                 const success = true;
-                if (success) {
-                    console.log('AdManager: Mock Ad Success!');
-                    if (onSuccess) onSuccess();
-                } else {
-                    console.log('AdManager: Mock Ad Failed');
-                    if (onFail) onFail();
-                }
-            } catch (error) {
-                console.error('AdManager Mock Error:', error);
-                gameState.transition(GameStates.GAMEOVER);
+                if (success && onSuccess) onSuccess();
+                else if (!success && onFail) onFail();
+            } else {
+                // Interstitial
+                if (onDismiss) onDismiss();
             }
         }, 1000);
     }

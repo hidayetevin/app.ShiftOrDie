@@ -275,7 +275,12 @@ export class UIManager {
         const btnRestart = document.getElementById('btn-restart');
         const btnMenu = document.getElementById('btn-menu');
 
-        if (btnRestart) btnRestart.onclick = () => gameState.transition(GameStates.PLAYING);
+        if (btnRestart) btnRestart.onclick = () => {
+            this.game.ads.showInterstitial(() => {
+                this.game.resetGame();
+                gameState.transition(GameStates.PLAYING);
+            });
+        };
         if (btnMenu) btnMenu.onclick = () => gameState.transition(GameStates.MENU);
     }
 
@@ -465,8 +470,10 @@ export class UIManager {
 
         document.getElementById('btn-continue-game').onclick = () => gameState.transition(GameStates.PLAYING);
         document.getElementById('btn-restart-paused').onclick = () => {
-            this.game.resetGame();
-            gameState.transition(GameStates.PLAYING);
+            this.game.ads.showInterstitial(() => {
+                this.game.resetGame();
+                gameState.transition(GameStates.PLAYING);
+            });
         };
         document.getElementById('btn-quit').onclick = () => gameState.transition(GameStates.MENU);
     }
