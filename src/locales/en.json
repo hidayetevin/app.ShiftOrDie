@@ -25,7 +25,8 @@
         "claim": "CLAIM",
         "survive": "Survive {{time}} seconds",
         "shifts": "Make {{count}} lane shifts",
-        "perfect": "Get {{count}} perfect shifts"
+        "perfect": "Get {{count}} perfect shifts",
+        "claimed": "CLAIMED ✓"
     },
     "settings": {
         "music": "Music",

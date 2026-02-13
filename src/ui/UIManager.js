@@ -306,7 +306,7 @@ export class UIManager {
                                 <div class="fill" style="width: ${(Math.min(t.progress, t.target) / t.target) * 100}%"></div>
                             </div>
                             ${t.completed && !t.claimed ? `<button class="btn-claim" data-id="${t.id}">${i18n.t('tasks.claim')} ${t.reward}🪙</button>` : ''}
-                            ${t.claimed ? '<span>CLAIMED ✓</span>' : ''}
+                            ${t.claimed ? `<span>${i18n.t('tasks.claimed')}</span>` : ''}
                         </div>`;
         }).join('')}
                 </div>

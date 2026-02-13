@@ -25,7 +25,8 @@
         "claim": "AL",
         "survive": "{{time}} saniye hayatta kal",
         "shifts": "{{count}} kez şerit değiştir",
-        "perfect": "{{count}} mükemmel geçiş yap"
+        "perfect": "{{count}} mükemmel geçiş yap",
+        "claimed": "ALINDI ✓"
     },
     "settings": {
         "music": "Müzik",
