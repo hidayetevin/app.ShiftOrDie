@@ -12,15 +12,21 @@ export class AdManager {
 
         // Mock ad behavior (2 second delay)
         setTimeout(() => {
-            const success = true; // Hardcoded success for mock
-            if (success) {
-                console.log('AdManager: Ad Success!');
-                onSuccess();
-            } else {
-                console.log('AdManager: Ad Failed/Skipped');
-                onFail();
+            try {
+                const success = true; // Hardcoded success for mock
+                if (success) {
+                    console.log('AdManager: Ad Success!');
+                    if (onSuccess) onSuccess();
+                } else {
+                    console.log('AdManager: Ad Failed/Skipped');
+                    if (onFail) onFail();
+                }
+            } catch (error) {
+                console.error('AdManager Error:', error);
+                // Fallback to ensure game doesn't hang
+                gameState.transition(GameStates.GAMEOVER);
             }
-        }, 2000);
+        }, 1000);
     }
 
     handleContinue() {

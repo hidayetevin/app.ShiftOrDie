@@ -20,7 +20,7 @@ class GameStateMachine {
             [GameStates.PAUSED]: [GameStates.PLAYING, GameStates.MENU],
             [GameStates.DYING]: [GameStates.GAMEOVER], // Death animation -> Game Over
             [GameStates.GAMEOVER]: [GameStates.PLAYING, GameStates.MENU, GameStates.REWARDED_AD],
-            [GameStates.REWARDED_AD]: [GameStates.PLAYING]
+            [GameStates.REWARDED_AD]: [GameStates.PLAYING, GameStates.GAMEOVER, GameStates.MENU]
         };
     }
 

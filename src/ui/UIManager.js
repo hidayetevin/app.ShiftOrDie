@@ -188,12 +188,15 @@ export class UIManager {
                     ${i18n.t('game.watch_continue')} <span class="ad-icon">📺</span>
                 </button>`;
         } else if (!doubleClaimed) {
-            const isZero = coinsEarned === 0;
+            // Button is ALWAYS enabled now.
+            // If coins > 0, shows "Watch 2x".
+            // If coins == 0, can still show "Watch 2x" implying you get something, or "Watch & Earn".
+            // User requested: "Buton yine çıksın. Videoyu izlerse Ödül olarak 2 coin versin"
+            // So we keep the standard look.
             primaryActionHTML = `
                 <button id="btn-double-coins" class="btn-primary-large" 
-                    style="${isZero ? 'background: #333; color: #777; border: 1px solid #444; cursor: not-allowed;' : 'background: linear-gradient(45deg, #ffd700, #ffaa00); color: black; border:none; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);'}"
-                    ${isZero ? 'disabled' : ''}>
-                    ${isZero ? 'NO COINS' : `📺 ${i18n.t('game.watch_2x')}`}
+                    style="background: linear-gradient(45deg, #ffd700, #ffaa00); color: black; border:none; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: clamp(0.9rem, 4vw, 1.3rem); white-space: nowrap;">
+                    <span style="font-size: 1.2em;">📺</span> <span>${i18n.t('game.watch_2x')}</span>
                 </button>`;
         } else if (doubleClaimed) {
             primaryActionHTML = `
@@ -233,7 +236,7 @@ export class UIManager {
                     <button id="btn-menu" class="btn-secondary" style="height: 50px;">${i18n.t('game.quit')}</button>
                 </div>
             </div>
-        `;
+            `;
         this.root.appendChild(div);
 
         // Continue Button Event
@@ -280,7 +283,7 @@ export class UIManager {
         const div = document.createElement('div');
         div.className = 'ui-modal';
         div.innerHTML = `
-            <div class="modal-content">
+                < div class="modal-content" >
                 <h2>${i18n.t('tasks.daily_tasks')}</h2>
                 <button class="btn-close">X</button>
                 <p class="reset-timer">Resets in: ${this.game.progression.getTimeUntilReset()}</p>
@@ -302,8 +305,8 @@ export class UIManager {
                         </div>`;
         }).join('')}
                 </div>
-            </div>
-        `;
+            </div >
+                `;
         this.root.appendChild(div);
 
         div.querySelector('.btn-close').onclick = () => div.remove();
@@ -328,7 +331,7 @@ export class UIManager {
         ];
 
         div.innerHTML = `
-            <div class="modal-content">
+                < div class="modal-content" >
                 <h2>SELECT STYLE</h2>
                 <button class="btn-close">X</button>
                 <div class="styles-list">
@@ -346,8 +349,8 @@ export class UIManager {
                         </div>`;
         }).join('')}
                 </div>
-            </div>
-        `;
+            </div >
+                `;
         this.root.appendChild(div);
 
         div.querySelector('.btn-close').onclick = () => div.remove();
@@ -379,7 +382,7 @@ export class UIManager {
         div.style.background = 'rgba(0,0,0,0.5)'; // Darken background
 
         div.innerHTML = `
-            <div class="settings-modal">
+                < div class="settings-modal" >
                 <div class="settings-header">
                     <h2>${i18n.t('menu.settings')}</h2>
                     <button class="btn-close">X</button>
@@ -411,8 +414,8 @@ export class UIManager {
                         </select>
                     </div>
                 </div>
-            </div>
-        `;
+            </div >
+                `;
         this.root.appendChild(div);
 
         // Music Toggle Event
@@ -451,13 +454,13 @@ export class UIManager {
         const div = document.createElement('div');
         div.className = 'ui-screen pause-screen';
         div.innerHTML = `
-            <h1>${i18n.t('game.paused')}</h1>
-            <div class="menu-buttons">
-                <button id="btn-continue-game" class="btn-main">${i18n.t('game.continue')}</button>
-                <button id="btn-restart-paused">${i18n.t('game.restart')}</button>
-                <button id="btn-quit">${i18n.t('game.quit')}</button>
-            </div>
-        `;
+                < h1 > ${i18n.t('game.paused')}</h1 >
+                    <div class="menu-buttons">
+                        <button id="btn-continue-game" class="btn-main">${i18n.t('game.continue')}</button>
+                        <button id="btn-restart-paused">${i18n.t('game.restart')}</button>
+                        <button id="btn-quit">${i18n.t('game.quit')}</button>
+                    </div>
+            `;
         this.root.appendChild(div);
 
         document.getElementById('btn-continue-game').onclick = () => gameState.transition(GameStates.PLAYING);

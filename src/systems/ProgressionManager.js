@@ -142,9 +142,16 @@ export class ProgressionManager {
     }
 
     doubleCoinsForRun() {
-        if (this.coinsEarnedThisRun > 0 && !this.doubleRewardClaimed) {
-            this.data.total_coins += this.coinsEarnedThisRun; // Add the amount again
-            this.coinsEarnedThisRun *= 2; // Double local tracking for display
+        if (!this.doubleRewardClaimed) {
+            if (this.coinsEarnedThisRun > 0) {
+                this.data.total_coins += this.coinsEarnedThisRun; // Add the amount again (2x)
+                this.coinsEarnedThisRun *= 2; // Double local tracking for display
+            } else {
+                // If 0 coins, give fixed reward of 2 coins
+                this.coinsEarnedThisRun = 2;
+                this.data.total_coins += 2;
+            }
+
             this.doubleRewardClaimed = true;
             this.saveData();
             return true;
