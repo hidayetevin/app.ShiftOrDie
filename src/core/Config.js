@@ -6,7 +6,7 @@ export const CONFIG = {
         GAP: 0.5
     },
     PLAYER: {
-        SWITCH_DURATION: 0.15,
+        SWITCH_DURATION: 0.10,
         INVULNERABLE_DURATION: 2000,
         RESPAWN_OPACITY: 0.5
     },

@@ -20,7 +20,7 @@ export class CollisionDetector {
         // Create a fixed-size box at player position instead of relying on mesh scale
         const center = this.player.mesh.position.clone();
         center.y += 1.0; // Raise center to mid-body
-        const size = new THREE.Vector3(0.6, 2.0, 0.6); // Width, Height, Depth
+        const size = new THREE.Vector3(0.3, 2.0, 0.3); // Width, Height, Depth - Balanced
         this.playerBox.setFromCenterAndSize(center, size);
 
         const activePlatforms = this.platformManager.active;
@@ -43,7 +43,31 @@ export class CollisionDetector {
 
         // Check for dangerous obstacles (red stacked crates)
         if (platform.userData.isDangerous) {
-            this.triggerDeath();
+            // NEW LOGIC: Only die if hitting an actual visible cube, not just the lane
+            const cubes = platform.userData.cubes;
+            let hitCube = false;
+
+            if (cubes) {
+                for (const cube of cubes) {
+                    if (cube.visible) {
+                        this.obstacleBox.setFromObject(cube);
+                        // Shrink obstacle box slightly for forgiving gameplay
+                        const shrink = 0.1;
+                        this.obstacleBox.min.addScalar(shrink);
+                        this.obstacleBox.max.subScalar(shrink);
+
+                        if (this.playerBox.intersectsBox(this.obstacleBox)) {
+                            hitCube = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (hitCube) {
+                this.triggerDeath();
+            }
+            // If lane is dangerous but we didn't hit a cube (e.g. in a gap), we are SAFE.
             return;
         }
 
@@ -52,17 +76,11 @@ export class CollisionDetector {
             // SOLDIER = INSTANT DEATH (cannot be jumped)
             if (platform.userData.soldierObstacle) {
                 this.obstacleBox.setFromObject(platform.userData.soldierObstacle);
+                // Shrink soldier box too
+                this.obstacleBox.min.addScalar(0.2);
+                this.obstacleBox.max.subScalar(0.2);
 
-                const pMin = this.playerBox.min;
-                const pMax = this.playerBox.max;
-                const oMin = this.obstacleBox.min;
-                const oMax = this.obstacleBox.max;
-
-                const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
-                const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
-                const collisionDepth = 0.3;
-
-                if (overlapX > collisionDepth && overlapZ > collisionDepth) {
+                if (this.playerBox.intersectsBox(this.obstacleBox)) {
                     console.warn('⚠️ SOLDIER COLLISION!');
                     // Collision with soldier body does usually hurt more?
                     // Let's make it 3 damage for hitting the soldier body directly
@@ -80,32 +98,42 @@ export class CollisionDetector {
             if (!obstacleTarget) return;
 
             this.obstacleBox.setFromObject(obstacleTarget);
+            // Shrink jumpable box slightly
+            this.obstacleBox.min.x += 0.1; this.obstacleBox.max.x -= 0.1;
+            this.obstacleBox.min.z += 0.1; this.obstacleBox.max.z -= 0.1;
 
-            const pMin = this.playerBox.min;
-            const pMax = this.playerBox.max;
-            const oMin = this.obstacleBox.min;
-            const oMax = this.obstacleBox.max;
+            if (this.playerBox.intersectsBox(this.obstacleBox)) {
 
-            const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
-            const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
-            const collisionDepth = 0.3;
+                // Detailed overlap check for jump landing
+                const pMin = this.playerBox.min;
+                // ... rest of logic uses pMin/pMax so we don't need intersection check again if we trust intersectsBox
+                // But original logic calculated overlaps manually. Let's keep manual calculation for height logic.
 
-            if (overlapX > collisionDepth && overlapZ > collisionDepth) {
-                const cubeTopY = oMax.y;
-                const playerBottomY = pMin.y;
-                const landingTolerance = 0.2;
+                const pMax = this.playerBox.max;
+                const oMin = this.obstacleBox.min;
+                const oMax = this.obstacleBox.max;
 
-                if (playerBottomY >= cubeTopY - landingTolerance) {
-                    console.log('✅ Landed on CUBE! Safe.');
-                } else {
-                    const playerHeight = this.player.mesh.position.y;
-                    const jumpThreshold = 0.9;
+                const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
+                const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
+                const collisionDepth = 0.1; // Reduced tolerance
 
-                    if (playerHeight > jumpThreshold) {
-                        console.log('✅ Cleared CUBE!');
+                if (overlapX > collisionDepth && overlapZ > collisionDepth) {
+                    const cubeTopY = oMax.y;
+                    const playerBottomY = pMin.y;
+                    const landingTolerance = 0.2;
+
+                    if (playerBottomY >= cubeTopY - landingTolerance) {
+                        console.log('✅ Landed on CUBE! Safe.');
                     } else {
-                        console.warn('💀 DEATH BY CUBE!');
-                        this.triggerDeath();
+                        const playerHeight = this.player.mesh.position.y;
+                        const jumpThreshold = 0.9;
+
+                        if (playerHeight > jumpThreshold) {
+                            console.log('✅ Cleared CUBE!');
+                        } else {
+                            console.warn('💀 DEATH BY CUBE!');
+                            this.triggerDeath();
+                        }
                     }
                 }
             }
