@@ -312,9 +312,9 @@ export class Player {
 
                                 // Coin Reward Logic
                                 this.killCount++;
-                                if (this.killCount % 1 === 0) { // Every kill
+                                if (this.killCount % 3 === 0) { // Every 3 kills
                                     this.game.score.addBonus(50);
-                                    this.game.progression.addCoin(5);
+                                    this.game.progression.addCoin(1);
                                 }
                             } else {
                                 // Hit effect (sparks)
