@@ -21,7 +21,7 @@ export const CONFIG = {
     },
     DIFFICULTY: {
         SPEED: {
-            BASE: 2.5,
+            BASE: 3.0,
             INCREMENT: 0.25,
             INTERVAL: 5,
             MAX: 8

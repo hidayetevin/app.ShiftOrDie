@@ -319,7 +319,7 @@ export class PlatformManager {
         }
     }
 
-    spawnRow() {
+    spawnRow(zPos = null) {
         if (this.pool.length < CONFIG.LANE.COUNT) {
             // Optional: Force expand pool or just skip
             return;
@@ -327,21 +327,24 @@ export class PlatformManager {
 
         this.spawnCounter++; // Increment row counter
 
+        // Default Z check
+        const finalZ = (zPos !== null) ? zPos : (CONFIG.PLATFORM.SPAWN_DISTANCE + 10);
+
         for (let i = 0; i < CONFIG.LANE.COUNT; i++) {
             const platform = this.pool.pop();
-            this.setupPlatform(platform, i);
+            this.setupPlatform(platform, i, finalZ);
 
             platform.visible = true;
             this.active.push(platform);
         }
     }
 
-    setupPlatform(platform, laneIndex) {
+    setupPlatform(platform, laneIndex, zPos) {
         // 1. Position
         platform.position.set(
             CONFIG.LANE.POSITIONS[laneIndex],
             0,
-            CONFIG.PLATFORM.SPAWN_DISTANCE + 10
+            zPos
         );
         platform.userData.lane = laneIndex;
 
@@ -440,6 +443,48 @@ export class PlatformManager {
         this.timeSinceLastSpawn = 0;
         this.spawnCounter = 0;
         this.lastObstacleIndices = [-99, -99, -99];
+
+        // PRE-FILL TRACK
+        // Start from Z=10 up to Z=30 so obstacles appear sooner
+        // Calculate strict spacing based on config to match runtime spawning
+        const speed = (this.game && this.game.currentSpeed > 0) ? this.game.currentSpeed : CONFIG.DIFFICULTY.SPEED.BASE;
+        const spacing = speed * CONFIG.PLATFORM.SPAWN_INTERVAL;
+
+        const startZ = 10;
+        const endZ = CONFIG.PLATFORM.SPAWN_DISTANCE + 10;
+        let lastZ = startZ;
+
+        for (let z = startZ; z < endZ; z += spacing) {
+            this.spawnRow(z);
+            lastZ = z;
+        }
+
+        // Calculate how much time has "passed" relative to the next spawn
+        // The last platform is at `lastZ`. The next one spawns at `endZ`.
+        // The distance remaining to fill is `endZ - lastZ`.
+        // This distance represents time we still need to wait: `remainingDist / speed`
+        // So `timeSinceLastSpawn` should be `SPAWN_INTERVAL - remainingTime`.
+        // Or simpler: We are `(lastZ - (endZ - spacing))` ahead?
+
+        // Let's deduce:
+        // Next spawn happens when `timeSinceLastSpawn >= INTERVAL`.
+        // Next spawn puts platform at `endZ`.
+        // Previous platform is at `lastZ`.
+        // Ideal gap is `spacing`.
+        // So `endZ - lastZ` is the actual gap.
+        // We want `actualGap` to be travelled in `remainingTime`.
+        // `remainingTime` = (endZ - lastZ) / speed.
+        // So we need to wait `remainingTime`.
+        // `timeSinceLastSpawn` starts at 0 and goes up.
+        // Waiting `remainingTime` means `timeSinceLastSpawn` should be `INTERVAL - remainingTime`.
+
+        if (speed > 0) {
+            const remainingDist = endZ - lastZ;
+            const remainingTime = remainingDist / speed;
+            this.timeSinceLastSpawn = Math.max(0, CONFIG.PLATFORM.SPAWN_INTERVAL - remainingTime);
+        } else {
+            this.timeSinceLastSpawn = 0;
+        }
     }
 
     setVisible(visible) {
