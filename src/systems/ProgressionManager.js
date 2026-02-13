@@ -77,7 +77,10 @@ export class ProgressionManager {
 
     initTasks() {
         const today = new Date().toDateString();
-        if (this.data.last_task_date !== today) {
+        // Check if any existing task has a reward > 10 (old data), if so regenerate
+        const hasOldData = this.data.daily_tasks.some(t => t.reward > 10);
+
+        if (this.data.last_task_date !== today || hasOldData) {
             this.generateDailyTasks();
             this.data.last_task_date = today;
             this.saveData();
@@ -86,14 +89,15 @@ export class ProgressionManager {
 
     generateDailyTasks() {
         const taskPool = [
-            { id: 'survive_30', type: 'survival', target: 30, reward: 100, label: 'Survive 30s' },
-            { id: 'shifts_50', type: 'action', target: 50, reward: 100, label: 'Make 50 shifts' },
-            { id: 'perfect_10', type: 'skill', target: 10, reward: 150, label: 'Get 10 perfect shifts' }
+            { id: 'survive_30', type: 'survival', target: 30, label: 'Survive 30s' },
+            { id: 'shifts_50', type: 'action', target: 50, label: 'Make 50 shifts' },
+            { id: 'perfect_10', type: 'skill', target: 10, label: 'Get 10 perfect shifts' }
         ];
 
-        // In a real app we might randomize, for now we take the definitive 3 from analysis §11
+        // Assign random reward between 2 and 10 coins
         this.data.daily_tasks = taskPool.map(task => ({
             ...task,
+            reward: Math.floor(Math.random() * 9) + 2, // 2 to 10 inclusively: floor(rnd * (10-2+1)) + 2 -> floor(rnd*9)+2
             progress: 0,
             completed: false,
             claimed: false
