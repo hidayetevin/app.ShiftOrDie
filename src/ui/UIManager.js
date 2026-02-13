@@ -288,7 +288,7 @@ export class UIManager {
         const div = document.createElement('div');
         div.className = 'ui-modal';
         div.innerHTML = `
-                < div class="modal-content" >
+            <div class="modal-content">
                 <h2>${i18n.t('tasks.daily_tasks')}</h2>
                 <button class="btn-close">X</button>
                 <p class="reset-timer">Resets in: ${this.game.progression.getTimeUntilReset()}</p>
@@ -310,8 +310,8 @@ export class UIManager {
                         </div>`;
         }).join('')}
                 </div>
-            </div >
-                `;
+            </div>
+        `;
         this.root.appendChild(div);
 
         div.querySelector('.btn-close').onclick = () => div.remove();
@@ -336,7 +336,7 @@ export class UIManager {
         ];
 
         div.innerHTML = `
-                < div class="modal-content" >
+            <div class="modal-content">
                 <h2>SELECT STYLE</h2>
                 <button class="btn-close">X</button>
                 <div class="styles-list">
@@ -354,8 +354,8 @@ export class UIManager {
                         </div>`;
         }).join('')}
                 </div>
-            </div >
-                `;
+            </div>
+        `;
         this.root.appendChild(div);
 
         div.querySelector('.btn-close').onclick = () => div.remove();
@@ -387,7 +387,7 @@ export class UIManager {
         div.style.background = 'rgba(0,0,0,0.5)'; // Darken background
 
         div.innerHTML = `
-                < div class="settings-modal" >
+            <div class="settings-modal">
                 <div class="settings-header">
                     <h2>${i18n.t('menu.settings')}</h2>
                     <button class="btn-close">X</button>
@@ -419,8 +419,8 @@ export class UIManager {
                         </select>
                     </div>
                 </div>
-            </div >
-                `;
+            </div>
+        `;
         this.root.appendChild(div);
 
         // Music Toggle Event
