@@ -46,10 +46,26 @@ export class MarketModal {
         grid.innerHTML = '';
 
         if (this.currentTab === 'skins') {
-            SKIN_CONFIG.forEach(skin => {
+            SKIN_CONFIG.forEach((skin, index) => {
+                const price = index === 0 ? 0 : 30 + (index - 1) * 10;
+                const isOwned = this.game.progression.isSkinOwned(skin.id);
                 const isSelected = marketManager.getSelectedSkin() === skin.id;
+
                 const item = document.createElement('div');
                 item.className = `market-item ${isSelected ? 'selected' : ''}`;
+
+                let btnText = '';
+                let isDisabled = false;
+
+                if (isSelected) {
+                    btnText = i18n.t('market.equipped');
+                    isDisabled = true;
+                } else if (isOwned) {
+                    btnText = i18n.t('market.select');
+                } else {
+                    btnText = `🪙 ${price}`;
+                }
+
                 item.innerHTML = `
                     <div class="item-preview skin-preview">
                         <img src="models/md2/ratamahatta/skins/Shop/${skin.shop}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -57,18 +73,34 @@ export class MarketModal {
                     <div class="item-info">
                         <h3>${skin.name}</h3>
                         <div class="stat-health">${i18n.t('market.protection')}: ${skin.health}</div>
-                        <button class="btn-select" data-id="${skin.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
+                        <button class="btn-select" data-id="${skin.id}" data-price="${price}" data-type="skin" ${isDisabled ? 'disabled' : ''}>
+                            ${btnText}
                         </button>
                     </div>  
                 `;
                 grid.appendChild(item);
             });
         } else {
-            WEAPON_CONFIG.forEach(weapon => {
+            WEAPON_CONFIG.forEach((weapon, index) => {
+                const price = index === 0 ? 0 : 30 + (index - 1) * 10;
+                const isOwned = this.game.progression.isWeaponOwned(weapon.id);
                 const isSelected = marketManager.getSelectedWeapon() === weapon.id;
+
                 const item = document.createElement('div');
                 item.className = `market-item ${isSelected ? 'selected' : ''}`;
+
+                let btnText = '';
+                let isDisabled = false;
+
+                if (isSelected) {
+                    btnText = i18n.t('market.equipped');
+                    isDisabled = true;
+                } else if (isOwned) {
+                    btnText = i18n.t('market.select');
+                } else {
+                    btnText = `🪙 ${price}`;
+                }
+
                 item.innerHTML = `
                     <div class="item-preview weapon-preview">
                         <img src="models/md2/ratamahatta/Weapons/${weapon.shop}" style="width: 100%;  object-fit: contain;">
@@ -76,8 +108,8 @@ export class MarketModal {
                     <div class="item-info">
                         <h3>${weapon.name}</h3>
                         <div class="stat-damage">${i18n.t('market.dmg')}: ${weapon.damage}</div>
-                        <button class="btn-select" data-id="${weapon.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
+                        <button class="btn-select" data-id="${weapon.id}" data-price="${price}" data-type="weapon" ${isDisabled ? 'disabled' : ''}>
+                            ${btnText}
                         </button>
                     </div>
                 `;
@@ -85,46 +117,59 @@ export class MarketModal {
             });
         }
 
-        // Attach select events
+        // Attach select/buy events
         grid.querySelectorAll('.btn-select').forEach(btn => {
             btn.onclick = () => {
                 const id = btn.getAttribute('data-id');
-                if (this.currentTab === 'skins') {
-                    // Update Market State
-                    marketManager.selectSkin(id);
+                const type = btn.getAttribute('data-type');
+                const price = parseInt(btn.getAttribute('data-price'));
 
-                    // Update Player Config & Visuals Immediately
-                    if (this.game && this.game.player) {
-                        const skin = SKIN_CONFIG.find(s => s.id === id);
+                let isOwned = false;
+                if (type === 'skin') isOwned = this.game.progression.isSkinOwned(id);
+                if (type === 'weapon') isOwned = this.game.progression.isWeaponOwned(id);
 
-                        // Update Character Model
-                        const idx = marketManager.getSkinIndex(id);
-                        if (this.game.player.character) {
-                            this.game.player.character.setSkin(idx);
-                        }
+                if (!isOwned) {
+                    // Attempt Purchase
+                    let success = false;
+                    if (type === 'skin') success = this.game.progression.buySkin(id, price);
+                    if (type === 'weapon') success = this.game.progression.buyWeapon(id, price);
 
-                        // Update Health Stats & UI
-                        if (skin && skin.health) {
-                            this.game.player.maxHealth = skin.health;
-                            this.game.player.health = skin.health;
-                            if (this.game.ui) {
-                                this.game.ui.updateHealth(skin.health, skin.health);
-                            }
-                        }
-                        console.log(`Skin updated to ${skin.name} (HP: ${skin.health})`);
+                    if (success) {
+                        this.renderItems();
+                        // Trigger manual coin refresh in main menu
+                        const menuCoins = document.querySelector('.stats-top span:first-child');
+                        if (menuCoins) menuCoins.innerHTML = `🪙 ${this.game.progression.data.total_coins}`;
+                    } else {
+                        alert('Not enough coins!');
                     }
                 } else {
-                    marketManager.selectWeapon(id);
-                    // Update Player Immediately
-                    if (this.game && this.game.player) {
-                        const idx = marketManager.getWeaponIndex(id);
-                        if (this.game.player.character) {
-                            this.game.player.character.setWeapon(idx);
-                            console.log('Weapon updated to', id);
+                    // Select Item
+                    if (type === 'skin') {
+                        marketManager.selectSkin(id);
+                        if (this.game && this.game.player) {
+                            const skin = SKIN_CONFIG.find(s => s.id === id);
+                            const idx = marketManager.getSkinIndex(id);
+
+                            if (this.game.player.character) {
+                                this.game.player.character.setSkin(idx);
+                            }
+                            if (skin && skin.health) {
+                                this.game.player.maxHealth = skin.health;
+                                this.game.player.health = skin.health;
+                                if (this.game.ui) this.game.ui.updateHealth(skin.health, skin.health);
+                            }
+                        }
+                    } else {
+                        marketManager.selectWeapon(id);
+                        if (this.game && this.game.player) {
+                            const idx = marketManager.getWeaponIndex(id);
+                            if (this.game.player.character) {
+                                this.game.player.character.setWeapon(idx);
+                            }
                         }
                     }
+                    this.renderItems();
                 }
-                this.renderItems(); // Re-render to update buttons
             };
         });
     }

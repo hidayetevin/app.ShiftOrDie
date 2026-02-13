@@ -25,13 +25,53 @@ export class ProgressionManager {
             unlocked_styles: ['neon'],
             selected_style: 'neon',
             last_task_date: '',
-            daily_tasks: []
+            daily_tasks: [],
+            owned_skins: ['ratamahatta'],
+            owned_weapons: ['w_machinegun']
         };
-        return saved ? JSON.parse(saved) : defaultData;
+
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Merge allows adding new fields to existing save data
+            return { ...defaultData, ...parsed };
+        }
+        return defaultData;
     }
 
     saveData() {
         localStorage.setItem(CONFIG.STORAGE_KEYS.DATA, JSON.stringify(this.data));
+    }
+
+    // ... (rest of methods)
+
+    isSkinOwned(id) {
+        return this.data.owned_skins && this.data.owned_skins.includes(id);
+    }
+
+    isWeaponOwned(id) {
+        return this.data.owned_weapons && this.data.owned_weapons.includes(id);
+    }
+
+    buySkin(id, price) {
+        if (this.data.total_coins >= price && !this.isSkinOwned(id)) {
+            this.data.total_coins -= price;
+            if (!this.data.owned_skins) this.data.owned_skins = [];
+            this.data.owned_skins.push(id);
+            this.saveData();
+            return true;
+        }
+        return false;
+    }
+
+    buyWeapon(id, price) {
+        if (this.data.total_coins >= price && !this.isWeaponOwned(id)) {
+            this.data.total_coins -= price;
+            if (!this.data.owned_weapons) this.data.owned_weapons = [];
+            this.data.owned_weapons.push(id);
+            this.saveData();
+            return true;
+        }
+        return false;
     }
 
     initTasks() {
@@ -61,6 +101,8 @@ export class ProgressionManager {
 
     updateTaskProgress(type, amount = 1) {
         let changed = false;
+        if (!this.data.daily_tasks) this.data.daily_tasks = [];
+
         this.data.daily_tasks.forEach(task => {
             if (task.type === type && !task.completed) {
                 task.progress += amount;
