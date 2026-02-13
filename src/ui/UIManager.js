@@ -200,7 +200,7 @@ export class UIManager {
                 </button>`;
         } else if (doubleClaimed) {
             primaryActionHTML = `
-                <div style="margin-bottom:20px; color:#ffd700; font-weight:bold; text-shadow:0 0 10px rgba(255,215,0,0.5);">
+                <div style="margin-bottom:20px; color:#ffd700; font-weight:bold; text-shadow:0 0 10px rgba(255,215,0,0.5); text-align: center; width: 100%;">
                      ✨ ${i18n.t('game.claimed_2x')} ✨
                 </div>`;
         }
