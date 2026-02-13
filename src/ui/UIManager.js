@@ -30,6 +30,26 @@ export class UIManager {
         }
     }
 
+    showNotification(message, type = 'info') {
+        const div = document.createElement('div');
+        div.className = `ui-notification ${type}`;
+        div.innerHTML = `<span>${message}</span>`;
+
+        // Append to body to ensure it's on top of everything including modals
+        document.body.appendChild(div);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            div.classList.add('show');
+        });
+
+        // Remove after delay
+        setTimeout(() => {
+            div.classList.remove('show');
+            setTimeout(() => div.remove(), 300);
+        }, 2000);
+    }
+
     renderLoading() {
         const div = document.createElement('div');
         div.className = 'ui-screen loading-screen';
@@ -305,7 +325,7 @@ export class UIManager {
                     this.renderStyles();
                     this.render(gameState.currentState); // refresh coin display
                 } else {
-                    alert('Not enough coins!');
+                    this.showNotification('Not enough coins!', 'error');
                 }
             };
         });
@@ -416,16 +436,5 @@ export class UIManager {
             </div>
         `;
         this.root.appendChild(div);
-    }
-
-    updateHealth(current, max) {
-        const healthText = document.getElementById('health-text');
-        const healthFill = document.getElementById('health-bar-fill');
-
-        if (healthText) healthText.innerText = `❤️ ${current}`; // Display current health with heart
-        if (healthFill) {
-            const percent = Math.max(0, (current / max) * 100);
-            healthFill.style.width = `${percent}%`;
-        }
     }
 }

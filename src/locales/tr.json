@@ -36,6 +36,8 @@
         "equipped": "KUŞANILDI",
         "select": "SEÇ",
         "dmg": "HASAR",
-        "protection": "KORUMA"
+        "protection": "KORUMA",
+        "insufficient_coins": "BAKİYE YETERSİZ!",
+        "purchase_success": "SATIN ALINDI!"
     }
 }

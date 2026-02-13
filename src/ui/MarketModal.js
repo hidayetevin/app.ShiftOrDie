@@ -139,8 +139,14 @@ export class MarketModal {
                         // Trigger manual coin refresh in main menu
                         const menuCoins = document.querySelector('.stats-top span:first-child');
                         if (menuCoins) menuCoins.innerHTML = `🪙 ${this.game.progression.data.total_coins}`;
+
+                        if (this.game.ui) {
+                            this.game.ui.showNotification(i18n.t('market.purchase_success'), 'success');
+                        }
                     } else {
-                        alert('Not enough coins!');
+                        if (this.game.ui) {
+                            this.game.ui.showNotification(i18n.t('market.insufficient_coins'), 'error');
+                        }
                     }
                 } else {
                     // Select Item

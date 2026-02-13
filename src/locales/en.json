@@ -36,6 +36,8 @@
         "equipped": "EQUIPPED",
         "select": "SELECT",
         "dmg": "DMG",
-        "protection": "PROTECTION"
+        "protection": "PROTECTION",
+        "insufficient_coins": "NOT ENOUGH COINS!",
+        "purchase_success": "ITEM PURCHASED!"
     }
 }
