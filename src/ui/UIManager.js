@@ -177,6 +177,31 @@ export class UIManager {
         const isNewRecord = this.game.score.isNewRecord;
         const canContinue = !this.game.ads.usedContinueThisRun;
         const highScore = this.game.score.highScore;
+        const coinsEarned = this.game.progression.coinsEarnedThisRun;
+        const doubleClaimed = this.game.progression.doubleRewardClaimed;
+
+        // Determine which primary action to show
+        let primaryActionHTML = '';
+        if (canContinue) {
+            primaryActionHTML = `
+                <button id="btn-continue" class="btn-continue-ad">
+                    ${i18n.t('game.watch_continue')} <span class="ad-icon">📺</span>
+                </button>`;
+        } else if (!doubleClaimed) {
+            const isZero = coinsEarned === 0;
+            primaryActionHTML = `
+                <button id="btn-double-coins" class="btn-primary-large" 
+                    style="${isZero ? 'background: #333; color: #777; border: 1px solid #444; cursor: not-allowed;' : 'background: linear-gradient(45deg, #ffd700, #ffaa00); color: black; border:none; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);'}"
+                    ${isZero ? 'disabled' : ''}>
+                    ${isZero ? 'NO COINS' : `📺 ${i18n.t('game.watch_2x')}`}
+                </button>`;
+        } else if (doubleClaimed) {
+            primaryActionHTML = `
+                <div style="margin-bottom:20px; color:#ffd700; font-weight:bold; text-shadow:0 0 10px rgba(255,215,0,0.5);">
+                     ✨ ${i18n.t('game.claimed_2x')} ✨
+                </div>`;
+        }
+        // Removed 'No Continues Left' else block
 
         div.innerHTML = `
             ${isNewRecord ? `<h2 class="new-record" style="color:var(--accent); text-shadow:0 0 20px var(--accent); margin-bottom:10px;">${i18n.t('game.new_record')}</h2>` : ''}
@@ -189,6 +214,11 @@ export class UIManager {
                     <span class="score-value highlight">${finalScore.toLocaleString()}</span>
                 </div>
                 
+                <div class="score-box" style="margin-top:10px; background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3);">
+                    <span class="score-label" style="color: #ffd700;">${i18n.t('game.earned_coins')}</span>
+                    <span class="score-value" style="color: #ffd700;">🪙 ${coinsEarned}</span>
+                </div>
+
                 <div class="high-score-display">
                     <span class="score-label" style="font-size:0.8rem; margin:0;">${i18n.t('game.high_score')}:</span>
                     <span class="high-score-val">${highScore.toLocaleString()}</span>
@@ -196,11 +226,7 @@ export class UIManager {
             </div>
 
             <div class="menu-buttons" style="width: 100%; max-width: 300px;">
-                ${canContinue ? `
-                <button id="btn-continue" class="btn-continue-ad">
-                    ${i18n.t('game.watch_continue')} <span class="ad-icon">📺</span>
-                </button>
-                ` : '<div style="margin-bottom:20px; color:rgba(255,255,255,0.5); font-style:italic;">No Continues Left</div>'}
+                ${primaryActionHTML}
                 
                 <div id="secondary-actions" class="secondary-actions">
                     <button id="btn-restart" class="btn-primary-large" style="height: 60px; font-size: 1.2rem;">${i18n.t('game.restart')}</button>
@@ -211,11 +237,27 @@ export class UIManager {
         this.root.appendChild(div);
 
         // Continue Button Event
-        if (canContinue) {
-            const continueBtn = document.getElementById('btn-continue');
-            if (continueBtn) {
-                continueBtn.onclick = () => this.game.ads.handleContinue();
-            }
+        const continueBtn = document.getElementById('btn-continue');
+        if (continueBtn) {
+            continueBtn.onclick = () => this.game.ads.handleContinue();
+        }
+
+        // Double Coins Button Event
+        const doubleBtn = document.getElementById('btn-double-coins');
+        if (doubleBtn) {
+            doubleBtn.onclick = () => {
+                this.game.ads.showRewarded(
+                    () => {
+                        // Success
+                        this.game.progression.doubleCoinsForRun();
+                        gameState.transition(GameStates.GAMEOVER); // Re-render to show updated state
+                    },
+                    () => {
+                        // Fail
+                        gameState.transition(GameStates.GAMEOVER); // Return to game over anyway
+                    }
+                );
+            };
         }
 
         // Reveal secondary buttons after 2 seconds

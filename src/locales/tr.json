@@ -15,7 +15,10 @@
         "continue": "Devam Et",
         "watch_continue": "İZLE DEVAM ET",
         "restart": "Yeniden Başla",
-        "quit": "Çık"
+        "quit": "Çık",
+        "earned_coins": "KAZANILAN COIN",
+        "claimed_2x": "2X KAZANILDI!",
+        "watch_2x": "İZLE 2x KAZAN"
     },
     "tasks": {
         "daily_tasks": "Görevler",

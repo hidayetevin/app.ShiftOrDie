@@ -9,6 +9,7 @@ export class ProgressionManager {
 
     resetRun() {
         this.coinsEarnedThisRun = 0;
+        this.doubleRewardClaimed = false;
     }
 
     addCoin(amount = 1) {
@@ -138,6 +139,17 @@ export class ProgressionManager {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
         return `${hours}h ${minutes}m`;
+    }
+
+    doubleCoinsForRun() {
+        if (this.coinsEarnedThisRun > 0 && !this.doubleRewardClaimed) {
+            this.data.total_coins += this.coinsEarnedThisRun; // Add the amount again
+            this.coinsEarnedThisRun *= 2; // Double local tracking for display
+            this.doubleRewardClaimed = true;
+            this.saveData();
+            return true;
+        }
+        return false;
     }
 
     unlockStyle(styleId, price) {

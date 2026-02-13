@@ -15,7 +15,10 @@
         "continue": "Continue",
         "watch_continue": "WATCH TO CONTINUE",
         "restart": "Restart",
-        "quit": "Quit"
+        "quit": "Quit",
+        "earned_coins": "EARNED COINS",
+        "claimed_2x": "2X CLAIMED!",
+        "watch_2x": "WATCH & EARN 2x"
     },
     "tasks": {
         "daily_tasks": "Daily Tasks",
