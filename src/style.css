@@ -429,80 +429,143 @@ button[disabled] {
 }
 
 .market-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.9), rgba(20, 20, 25, 0.95));
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    transition: all 0.2s;
+    justify-content: flex-start;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+    height: 100%;
+    /* Fill grid cell */
+}
+
+/* Removed overflow:hidden to allow shadows/glows, but added clip-path for inner visuals if needed */
+
+.market-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
+    pointer-events: none;
+    border-radius: 16px;
 }
 
 .market-item.selected {
-    border-color: var(--accent);
-    box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
-    background: rgba(255, 255, 0, 0.05);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(0, 50, 50, 0.8), rgba(0, 20, 30, 0.95));
+    transform: translateY(-2px);
 }
 
-.market-item:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.1);
+.market-item:not(.selected):hover {
+    transform: translateY(-4px);
+    background: linear-gradient(145deg, rgba(40, 40, 45, 0.9), rgba(30, 30, 35, 0.95));
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 .item-preview {
     width: 100%;
-    aspect-ratio: 1;
+    height: 120px;
+    /* Fixed height instead of square aspect-ratio */
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border-radius: 8px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    border-radius: 12px;
     margin-bottom: 5px;
-    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    flex-shrink: 0;
+    /* Prevent shrinking */
 }
 
 .item-info {
     width: 100%;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    /* Take remaining space */
+    justify-content: flex-end;
+    /* Push content to bottom of info area */
 }
 
 .item-info h3 {
-    font-size: 0.8rem;
-    margin-bottom: 5px;
+    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+    font-weight: 800;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: none;
-    -webkit-text-fill-color: #fff;
-    letter-spacing: 1px;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
+.stat-health,
 .stat-damage {
-    font-size: 0.7rem;
-    color: var(--secondary);
-    margin-bottom: 8px;
-    font-weight: bold;
+    font-size: clamp(0.6rem, 2vw, 0.75rem);
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-self: center;
+}
+
+.market-item.selected .stat-health,
+.market-item.selected .stat-damage {
+    color: var(--primary);
+    border-color: rgba(0, 255, 255, 0.3);
+    background: rgba(0, 255, 255, 0.1);
 }
 
 .btn-select {
     width: 100%;
     padding: 8px;
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+    font-weight: 800;
+    letter-spacing: 1px;
     background: var(--primary);
     color: #000;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    transition: all 0.2s;
+    margin-top: 5px;
+}
+
+.btn-select:not([disabled]):hover {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+.btn-select:active {
+    transform: scale(0.98);
 }
 
 .btn-select[disabled] {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
     cursor: default;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* === NEW MENU LAYOUT === */
