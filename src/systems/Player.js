@@ -128,8 +128,7 @@ export class Player {
 
         // Clear projectiles
         this.projectiles.forEach(proj => this.scene.remove(proj));
-        this.projectiles.forEach(proj => this.scene.remove(proj));
-        this.projectiles = [];
+        this.projectiles = []; // Fix duplicate remove
         this.killCount = 0; // Reset kill count
         // Reset health based on skin
         const savedSkinId = marketManager.getSelectedSkin();
@@ -144,6 +143,30 @@ export class Player {
         // Reset animation
         if (this.isLoaded) {
             this.setAnimation(this.idleAnimationName || 'stand');
+        }
+    }
+
+    revive() {
+        console.log('✨ REVIVING PLAYER!');
+        // 1. Restore Health
+        this.health = 1; // Revival sets health to 1 (Last Chance)
+        this.isDying = false;
+        this.isShooting = false;
+        this.isJumping = false;
+
+        // 2. Clear nearby threats (optional, but good for UX)
+        // For now, rely on invulnerability
+
+        // 3. Reset Animation
+        this.setAnimation('run');
+
+        // 4. Invulnerability handled by Game.js calling setInvulnerable, 
+        //    but good to ensure here too if called standalone.
+        //    (Game.js calls it with CONFIG.PLAYER.INVULNERABLE_DURATION)
+
+        // 5. Update UI
+        if (this.game && this.game.ui) {
+            this.game.ui.updateHealth(this.health, this.maxHealth);
         }
     }
 

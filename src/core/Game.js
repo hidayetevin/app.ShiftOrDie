@@ -182,7 +182,8 @@ class Game {
             this.setMenuMode(true);
         } else if (newState === GameStates.PLAYING) {
             this.setMenuMode(false);
-            if (oldState !== GameStates.PAUSED) {
+            // Only reset if NOT continuing from ad/pause
+            if (oldState !== GameStates.PAUSED && oldState !== GameStates.REWARDED_AD) {
                 this.resetGame();
             }
         }
@@ -240,6 +241,7 @@ class Game {
     }
 
     continueGame() {
+        this.player.revive();
         this.player.setInvulnerable(CONFIG.PLAYER.INVULNERABLE_DURATION);
         gameState.transition(GameStates.PLAYING);
     }
