@@ -131,8 +131,8 @@ export class CollisionDetector {
                         if (playerHeight > jumpThreshold) {
                             console.log('✅ Cleared CUBE!');
                         } else {
-                            console.warn('💀 DEATH BY CUBE!');
-                            this.triggerDeath();
+                            console.warn('💀 HIT CUBE!');
+                            this.player.takeDamage(1);
                         }
                     }
                 }

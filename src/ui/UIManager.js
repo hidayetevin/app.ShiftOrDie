@@ -84,9 +84,7 @@ export class UIManager {
                 </div>
                 <div class="hud-health">
                     <span id="health-text">❤️ 10</span>
-                    <div class="health-bar-container">
-                        <div id="health-bar-fill" class="fill"></div>
-                    </div>
+                    <div id="health-segments" class="health-segments-container"></div>
                 </div>
                 <button id="btn-pause">||</button>
             </div>
@@ -126,6 +124,29 @@ export class UIManager {
                 }
             }
         }, 100);
+    }
+
+    updateHealth(current, max) {
+        const healthText = document.getElementById('health-text');
+        const segmentsContainer = document.getElementById('health-segments');
+
+        if (healthText) healthText.innerText = `❤️ ${current}/${max}`;
+
+        if (segmentsContainer) {
+            segmentsContainer.innerHTML = ''; // Clear
+
+            // Create segments
+            for (let i = 0; i < max; i++) {
+                const seg = document.createElement('div');
+                seg.className = 'health-segment';
+                if (i < current) {
+                    seg.classList.add('active');
+                } else {
+                    seg.classList.add('empty');
+                }
+                segmentsContainer.appendChild(seg);
+            }
+        }
     }
 
     renderGameOver() {

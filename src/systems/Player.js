@@ -3,7 +3,7 @@ import { MD2Character } from 'three/examples/jsm/misc/MD2Character.js';
 import { gsap } from 'gsap';
 import { CONFIG } from '../core/Config';
 import { marketManager } from './MarketManager';
-import { SKIN_CONFIG, WEAPON_CONFIG, getWeaponById } from './WeaponConfig';
+import { SKIN_CONFIG, WEAPON_CONFIG, getWeaponById, getSkinById } from './WeaponConfig';
 
 export class Player {
     constructor(scene) {
@@ -21,8 +21,8 @@ export class Player {
         this.projectiles = []; // Track active projectiles
         this.killCount = 0; // Track soldier kills for coin rewards
         this.tempVec3 = new THREE.Vector3(); // GC fix
-        this.health = 10;
-        this.maxHealth = 10;
+        this.health = 2; // Default, will be updated by skin
+        this.maxHealth = 2;
 
         this.init();
     }
@@ -103,7 +103,7 @@ export class Player {
 
                     if (weaponIndex >= 0) {
                         this.character.setWeapon(weaponIndex);
-                        console.log(`🔫 Weapon equipped: ${savedWeaponId}`);
+                        console.log(`🔫 Weapon equipped: ${savedWeaponId} `);
                     } else {
                         this.character.setWeapon(0);
                     }
@@ -131,8 +131,15 @@ export class Player {
         this.projectiles.forEach(proj => this.scene.remove(proj));
         this.projectiles = [];
         this.killCount = 0; // Reset kill count
-        this.health = 10; // Reset health
-        this.maxHealth = 10;
+        // Reset health based on skin
+        const savedSkinId = marketManager.getSelectedSkin();
+        const skinData = getSkinById(savedSkinId);
+        this.maxHealth = skinData ? skinData.health : 2;
+        this.health = this.maxHealth;
+
+        if (this.game && this.game.ui) {
+            this.game.ui.updateHealth(this.health, this.maxHealth);
+        }
 
         // Reset animation
         if (this.isLoaded) {
@@ -385,7 +392,7 @@ export class Player {
 
         // Map generic names to MD2 specific names if needed
         // MD2 standard: stand, run, jump, attack, pain, death, flip, salute, etc.
-        console.log(`🎬 Switching animation: ${name}`);
+        console.log(`🎬 Switching animation: ${name} `);
         this.character.setAnimation(name);
         this.currentAnimation = name;
     }
@@ -597,9 +604,8 @@ export class Player {
         }
 
         if (this.health <= 0) {
-            this.playDeathAnimation();
             if (this.game && this.game.collision) {
-                this.game.collision.handleCollision();
+                this.game.collision.triggerDeath();
             }
         } else {
             // Brief invulnerability

@@ -56,10 +56,11 @@ export class MarketModal {
                     </div>
                     <div class="item-info">
                         <h3>${skin.name}</h3>
+                        <div class="stat-health">Protection: ${skin.health}</div>
                         <button class="btn-select" data-id="${skin.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
+                            ${isSelected ? 'EQUIPPED' : 'SELECT'}
                         </button>
-                    </div>
+                    </div>  
                 `;
                 grid.appendChild(item);
             });
@@ -89,14 +90,28 @@ export class MarketModal {
             btn.onclick = () => {
                 const id = btn.getAttribute('data-id');
                 if (this.currentTab === 'skins') {
+                    // Update Market State
                     marketManager.selectSkin(id);
-                    // Update Player Immediately if possible
+
+                    // Update Player Config & Visuals Immediately
                     if (this.game && this.game.player) {
+                        const skin = SKIN_CONFIG.find(s => s.id === id);
+
+                        // Update Character Model
                         const idx = marketManager.getSkinIndex(id);
                         if (this.game.player.character) {
                             this.game.player.character.setSkin(idx);
-                            console.log('Skin updated to', id);
                         }
+
+                        // Update Health Stats & UI
+                        if (skin && skin.health) {
+                            this.game.player.maxHealth = skin.health;
+                            this.game.player.health = skin.health;
+                            if (this.game.ui) {
+                                this.game.ui.updateHealth(skin.health, skin.health);
+                            }
+                        }
+                        console.log(`Skin updated to ${skin.name} (HP: ${skin.health})`);
                     }
                 } else {
                     marketManager.selectWeapon(id);

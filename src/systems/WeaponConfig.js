@@ -13,11 +13,11 @@ export const WEAPON_CONFIG = [
 ];
 
 export const SKIN_CONFIG = [
-    { id: 'ratamahatta', name: 'Ratamahatta', texture: 'ratamahatta.png', shop: 'ratamahatta.jpg' },
-    { id: 'ctf_b', name: 'Blue Team', texture: 'ctf_b.png', shop: 'ctf_b.jpg' },
-    { id: 'ctf_r', name: 'Red Team', texture: 'ctf_r.png', shop: 'ctf_r.jpg' },
-    { id: 'dead', name: 'Undead', texture: 'dead.png', shop: 'dead.jpg' },
-    { id: 'gearwhore', name: 'Gearwhore', texture: 'gearwhore.png', shop: 'gearwhore.jpg' }
+    { id: 'ratamahatta', name: 'Ratamahatta', texture: 'ratamahatta.png', shop: 'ratamahatta.jpg', health: 2 },
+    { id: 'ctf_b', name: 'Blue Team', texture: 'ctf_b.png', shop: 'ctf_b.jpg', health: 3 },
+    { id: 'ctf_r', name: 'Red Team', texture: 'ctf_r.png', shop: 'ctf_r.jpg', health: 3 },
+    { id: 'dead', name: 'Undead', texture: 'dead.png', shop: 'dead.jpg', health: 4 },
+    { id: 'gearwhore', name: 'Gearwhore', texture: 'gearwhore.png', shop: 'gearwhore.jpg', health: 5 }
 ];
 
 export const getWeaponById = (id) => WEAPON_CONFIG.find(w => w.id === id);
