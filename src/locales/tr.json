@@ -35,6 +35,7 @@
         "weapons": "SİLAHLAR",
         "equipped": "KUŞANILDI",
         "select": "SEÇ",
-        "dmg": "HASAR"
+        "dmg": "HASAR",
+        "protection": "KORUMA"
     }
 }

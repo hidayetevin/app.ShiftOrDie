@@ -35,6 +35,7 @@
         "weapons": "WEAPONS",
         "equipped": "EQUIPPED",
         "select": "SELECT",
-        "dmg": "DMG"
+        "dmg": "DMG",
+        "protection": "PROTECTION"
     }
 }

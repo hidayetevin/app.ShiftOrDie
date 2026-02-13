@@ -56,9 +56,9 @@ export class MarketModal {
                     </div>
                     <div class="item-info">
                         <h3>${skin.name}</h3>
-                        <div class="stat-health">Protection: ${skin.health}</div>
+                        <div class="stat-health">${i18n.t('market.protection')}: ${skin.health}</div>
                         <button class="btn-select" data-id="${skin.id}" ${isSelected ? 'disabled' : ''}>
-                            ${isSelected ? 'EQUIPPED' : 'SELECT'}
+                            ${isSelected ? i18n.t('market.equipped') : i18n.t('market.select')}
                         </button>
                     </div>  
                 `;
