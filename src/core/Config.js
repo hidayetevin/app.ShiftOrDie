@@ -51,5 +51,11 @@ export const CONFIG = {
         HIGHSCORE: 'shift_or_die_highscore',
         DATA: 'shift_or_die_data',
         SETTINGS: 'shift_or_die_settings'
+    },
+    ADS: {
+        APP_ID: 'ca-app-pub-4190858087915294~6476509781',
+        BANNER: 'ca-app-pub-4190858087915294/5163428118',
+        INTERSTITIAL: 'ca-app-pub-4190858087915294/6515106021',
+        REWARDED: 'ca-app-pub-4190858087915294/8540400495'
     }
 };
