@@ -485,7 +485,15 @@ export class PlatformManager {
         pu.visible = true;
 
         // Select Random Type
-        const types = ['health', 'shield', 'ghost', 'time'];
+        let types = ['health', 'shield', 'ghost', 'time'];
+
+        // If HP is full, exclude 'health'
+        if (this.game && this.game.player && this.game.player.health >= this.game.player.maxHealth) {
+            types = types.filter(t => t !== 'health');
+        }
+
+        if (types.length === 0) return;
+
         // Weights: Health(20%), Shield(30%), Ghost(25%), Time(25%)
         // Simple random for now
         const type = types[Math.floor(Math.random() * types.length)];
