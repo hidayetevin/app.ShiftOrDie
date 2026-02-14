@@ -300,7 +300,7 @@ export class PlatformManager {
             const bulletY = bullet.position.y;
             const withinHeight = bulletY > 0 && bulletY < 2.0;
 
-            if (distXZ < 0.6 && withinHeight && !this.game.player.isDying && !this.game.player.invulnerable) {
+            if (distXZ < 0.6 && withinHeight && !this.game.player.isDying && !this.game.player.invulnerable && !this.game.player.isJumping) {
                 console.log('💥 Player Hit by Enemy Bullet!');
 
                 // Damage Player
