@@ -245,7 +245,47 @@ export class PlatformManager {
         meshShield.add(sRing1);
         meshShield.add(sRing2);
         // Note: Collision box will be calculated from group, should still be fine around 0.5 size.
-        const meshGhost = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 8), mats.puGhost);
+        // Ghost: Sheet Ghost with Holes
+        const ghostShape = new THREE.Shape();
+
+        // Head (Top Arc) - Start from right side counter-clockwise
+        ghostShape.absarc(0, 4, 4, 0, Math.PI, false); // Top half circle
+
+        // Left Side
+        ghostShape.lineTo(-4, -5);
+
+        // Bottom Waves
+        // ghostShape.bezierCurveTo(...) - Let's do simple zigzag for retro feel
+        ghostShape.lineTo(-2, -3);
+        ghostShape.lineTo(0, -5);
+        ghostShape.lineTo(2, -3);
+        ghostShape.lineTo(4, -5);
+
+        // Right Side
+        ghostShape.lineTo(4, 4); // Close loop
+
+        // Eyes (Holes)
+        const leftEye = new THREE.Path();
+        leftEye.absellipse(-1.5, 4.5, 0.8, 1.0, 0, Math.PI * 2, true);
+        ghostShape.holes.push(leftEye);
+
+        const rightEye = new THREE.Path();
+        rightEye.absellipse(1.5, 4.5, 0.8, 1.0, 0, Math.PI * 2, true);
+        ghostShape.holes.push(rightEye);
+
+        const ghostGeo = new THREE.ExtrudeGeometry(ghostShape, {
+            depth: 3,
+            bevelEnabled: true,
+            bevelThickness: 0.5,
+            bevelSize: 0.5,
+            bevelSegments: 2
+        });
+
+        ghostGeo.scale(0.045, 0.045, 0.045);
+        ghostGeo.center();
+
+        const meshGhost = new THREE.Mesh(ghostGeo, mats.puGhost);
+
         const meshTime = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 16), mats.puTime);
 
         // Add all to group, toggle visibility on spawn
