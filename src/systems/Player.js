@@ -708,15 +708,44 @@ export class Player {
 
         // Create Visual Shield
         if (!this.shieldMesh) {
-            const geo = new THREE.SphereGeometry(0.6, 16, 16);
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0x0088ff,
+            // Hemisphere Shield (Daha estetik, karakterin önünde)
+            const radius = 1.3;
+            const widthSegments = 32;
+            const heightSegments = 16;
+            // thetaLength = Math.PI / 2 -> Yarım küre
+            const geo = new THREE.SphereGeometry(radius, widthSegments, heightSegments, 0, Math.PI * 2, 0, Math.PI / 2);
+
+            // Materyal: Biraz daha şeffaf ve teknolojik
+            const mat = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x0044aa,
+                specular: 0xffffff,
+                shininess: 100,
                 transparent: true,
                 opacity: 0.3,
-                wireframe: true
+                wireframe: false, // Solid ama şeffaf
+                side: THREE.DoubleSide
             });
-            this.shieldMesh = new THREE.Mesh(geo, mat);
-            this.shieldMesh.position.y = 1.0;
+
+            // Wireframe Overlay (daha havalı durması için)
+            const wireGeo = new THREE.WireframeGeometry(geo);
+            const wireMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5 });
+            const wireMesh = new THREE.LineSegments(wireGeo, wireMat);
+
+            this.shieldMesh = new THREE.Group();
+            const mainShield = new THREE.Mesh(geo, mat);
+
+            this.shieldMesh.add(mainShield);
+            this.shieldMesh.add(wireMesh);
+
+            // Pozisyonlandırma: Göğüs hizası ve biraz öne
+            // Player'ın yüzü +Z yönüne bakıyorsa Z pozitif, -Z ise Z negatif.
+            // Genelde modeller +Z'ye bakar.
+            this.shieldMesh.position.set(0, 1.1, 0.4);
+
+            // Rotasyon: Yarım Küreyi öne çevir (Y ekseni yukarı bakıyor, X ekseninde 90 derece çevir)
+            this.shieldMesh.rotation.x = Math.PI / 2;
+
             this.mesh.add(this.shieldMesh);
         }
         this.shieldMesh.visible = true;
