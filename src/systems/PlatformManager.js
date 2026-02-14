@@ -87,7 +87,7 @@ export class PlatformManager {
             puHealth: new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0x550000 }),
             puShield: new THREE.MeshLambertMaterial({ color: 0x0088ff, emissive: 0x002288, transparent: true, opacity: 0.8 }),
             puGhost: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xaaaaaa, transparent: true, opacity: 0.6 }),
-            puTime: new THREE.MeshLambertMaterial({ color: 0xffd700, emissive: 0xaa8800 })
+            puTime: new THREE.MeshLambertMaterial({ color: 0xffaa00, emissive: 0xaa4400 })
         };
 
         // Power-Up Geometries
@@ -286,7 +286,36 @@ export class PlatformManager {
 
         const meshGhost = new THREE.Mesh(ghostGeo, mats.puGhost);
 
-        const meshTime = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 16), mats.puTime);
+
+
+
+        // Time: Hourglass
+        const meshTime = new THREE.Group();
+
+        // Cones (Glass/Sand part)
+        const coneGeo = new THREE.ConeGeometry(0.25, 0.35, 8);
+
+        const tCone = new THREE.Mesh(coneGeo, mats.puTime);
+        tCone.position.y = 0.175;
+        tCone.rotation.x = Math.PI; // Tip down
+
+        const bCone = new THREE.Mesh(coneGeo, mats.puTime);
+        bCone.position.y = -0.175; // Tip up
+
+        // Caps (Top and Bottom)
+        const capGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 8);
+
+        const tCap = new THREE.Mesh(capGeo, mats.puTime);
+        tCap.position.y = 0.375;
+
+        const bCap = new THREE.Mesh(capGeo, mats.puTime);
+        bCap.position.y = -0.375;
+
+        meshTime.add(tCone);
+        meshTime.add(bCone);
+        meshTime.add(tCap);
+        meshTime.add(bCap);
+        // Scale adjustment if needed, but sizes look okay (total height ~0.8)
 
         // Add all to group, toggle visibility on spawn
         powerUpGroup.add(meshHealth);
