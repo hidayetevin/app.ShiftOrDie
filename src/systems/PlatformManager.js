@@ -410,7 +410,7 @@ export class PlatformManager {
 
         data.lastShotTime += deltaTime;
 
-        if (platform.position.z < 30 && platform.position.z > 2 && data.lastShotTime > 1.5) {
+        if (platform.position.z < 30 && platform.position.z > 2 && data.lastShotTime > 3.0) {
             this.fireEnemyBullet(platform, soldier);
             data.lastShotTime = 0;
         }
