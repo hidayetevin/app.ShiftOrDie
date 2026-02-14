@@ -64,15 +64,18 @@ export class CollisionDetector {
                 }
             }
 
-            if (hitCube) {
+            if (hitCube && !this.player.isGhost) {
                 this.triggerDeath();
             }
             // If lane is dangerous but we didn't hit a cube (e.g. in a gap), we are SAFE.
+            // Also safe if isGhost is true (Ghost Mode)
             return;
         }
 
         // Check for jumpable obstacles (gray crates or soldiers on safe lanes)
         if (platform.userData.hasJumpableObstacle) {
+            if (this.player.isGhost) return; // Ghost walks through everything
+
             // SOLDIER = INSTANT DEATH (cannot be jumped)
             if (platform.userData.soldierObstacle) {
                 this.obstacleBox.setFromObject(platform.userData.soldierObstacle);
@@ -135,6 +138,27 @@ export class CollisionDetector {
                             this.player.takeDamage(1);
                         }
                     }
+                }
+            }
+        }
+        // Check Power-Up Collision
+        if (platform.userData.hasPowerUp && platform.userData.powerUp.visible) {
+            const pu = platform.userData.powerUp;
+            this.obstacleBox.setFromObject(pu);
+
+            // Adjust box size manualy if needed, or trust setFromObject
+            // PowerUps are at y=1.0, size ~0.5. Box should be roughly correct.
+
+            if (this.playerBox.intersectsBox(this.obstacleBox)) {
+                console.log('✨ Power-Up Collision!');
+                const type = pu.userData.activeType;
+
+                if (type) {
+                    this.player.collectPowerUp(type);
+
+                    // Hide Power-Up
+                    pu.visible = false;
+                    platform.userData.hasPowerUp = false;
                 }
             }
         }

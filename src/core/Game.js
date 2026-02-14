@@ -45,6 +45,7 @@ class Game {
 
         this.currentSpeed = CONFIG.DIFFICULTY.SPEED.BASE;
         this.speedMultiplier = 1.0; // Added for jump dash effect
+        this.timeScale = 1.0; // Time Slow Effect
         this.onboardingActive = false;
 
         this.init();
@@ -270,8 +271,11 @@ class Game {
     }
 
     update(deltaTime) {
+        // Apply Time Scale for Slow Motion
+        const scaledDelta = deltaTime * (this.timeScale || 1.0);
+
         if (gameState.currentState === GameStates.MENU) {
-            // Update player animation in menu
+            // Update player animation in menu (keep real time)
             this.player.update(deltaTime, 0, this.vfx, false);
         } else if (gameState.currentState === GameStates.PLAYING) {
             this.updateDifficulty();
@@ -279,13 +283,13 @@ class Game {
             // Calculate effective speed with multiplier (for jump dash effect)
             const effectiveSpeed = this.currentSpeed * (this.speedMultiplier || 1.0);
 
-            this.score.update(deltaTime);
+            this.score.update(scaledDelta);
             this.rule.update(this.score.timeSurvived);
-            this.platform.update(deltaTime, effectiveSpeed); // Use effective speed
+            this.platform.update(scaledDelta, effectiveSpeed); // Use effective speed
             this.collision.update();
-            this.vfx.update(deltaTime);
-            this.environment.update(deltaTime, effectiveSpeed); // Use effective speed
-            this.player.update(deltaTime, effectiveSpeed, this.vfx, true); // Use effective speed
+            this.vfx.update(scaledDelta);
+            this.environment.update(scaledDelta, effectiveSpeed); // Use effective speed
+            this.player.update(scaledDelta, effectiveSpeed, this.vfx, true); // Use effective speed
 
             // Dynamic camera tracking with speed-based smoothing
             const smoothFactor = this.currentSpeed > 10 ? 0.15 : 0.1;
@@ -315,6 +319,34 @@ class Game {
 
     render() {
         this.composer.render();
+    }
+
+    activateTimeSlow(duration) {
+        if (this.isTimeSlowActive) return;
+
+        console.log('⏳ Time Slow Activated!');
+        this.isTimeSlowActive = true;
+        this.timeScale = 0.5; // Slow down game to 50%
+
+        // Audio Effect (Pitch Down)
+        if (this.audio && this.audio.bgMusic && this.audio.bgMusic.source) {
+            try {
+                this.audio.bgMusic.source.playbackRate.value = 0.5;
+            } catch (e) { console.warn('Audio pitch error', e); }
+        }
+
+        setTimeout(() => {
+            this.timeScale = 1.0;
+            this.isTimeSlowActive = false;
+            console.log('⌛ Time Slow Ended');
+
+            // Restore Audio
+            if (this.audio && this.audio.bgMusic && this.audio.bgMusic.source) {
+                try {
+                    this.audio.bgMusic.source.playbackRate.value = 1.0;
+                } catch (e) { console.warn('Audio pitch error', e); }
+            }
+        }, duration);
     }
 }
 

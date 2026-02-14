@@ -81,8 +81,20 @@ export class PlatformManager {
             crate: new THREE.MeshBasicMaterial({ map: crateTexture }),
             jumpable: new THREE.MeshBasicMaterial({ map: crateTexture, color: 0xaaaaaa }),
             hpBg: new THREE.MeshBasicMaterial({ color: 0x000000 }),
-            hpFg: new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            hpBg: new THREE.MeshBasicMaterial({ color: 0x000000 }),
+            hpFg: new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+            // Power-Up Materials
+            puHealth: new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0x550000 }),
+            puShield: new THREE.MeshLambertMaterial({ color: 0x0088ff, emissive: 0x002288, transparent: true, opacity: 0.8 }),
+            puGhost: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xaaaaaa, transparent: true, opacity: 0.6 }),
+            puTime: new THREE.MeshLambertMaterial({ color: 0xffd700, emissive: 0xaa8800 })
         };
+
+        // Power-Up Geometries
+        const geoHeart = new THREE.OctahedronGeometry(0.5); // Simple diamond shape for heart
+        const geoShield = new THREE.IcosahedronGeometry(0.5, 1); // Crystal/Shield shape
+        const geoGhost = new THREE.ConeGeometry(0.4, 0.8, 8); // Ghost shape
+        const geoTime = new THREE.TorusGeometry(0.3, 0.1, 8, 16); // Ring/Clock shape
 
         // Loop vars
         let createdCount = 0;
@@ -178,6 +190,48 @@ export class PlatformManager {
             hpBarRef = fg;
         }
 
+        // 5. Power-Up Container (Pre-allocate 1 per platform)
+        const powerUpGroup = new THREE.Group();
+        powerUpGroup.position.set(0, 1.0, 0); // Warning: Height adjustments may be needed
+        powerUpGroup.visible = false;
+
+        // Create meshes for each type (only show 1 active at a time)
+        // We reuse geometries defined in initPoolAsync scope. 
+        // Note: arguments to createSinglePlatform need update to pass geometries?
+        // Actually, easiest is to use standard geometries here if we can't pass them easily 
+        // or just recreate small geometries (offset cost is minimal for 15-20 platforms).
+        // Better: Pass them in "mats" object as a hack or update signature. 
+        // For now, I will use standard geometries to keep signature simple or assume they are available.
+        // Wait, I cannot access geoHeart etc. from here unless passed.
+        // Let's use simple geometries here to avoid signature complexity for now, or use what is available.
+        // Actually, I should update the signature in step 1. But I didn't. 
+        // I will use `new THREE...` here. Since it's init-time, it's acceptable.
+
+        const meshHealth = new THREE.Mesh(new THREE.OctahedronGeometry(0.4), mats.puHealth);
+        const meshShield = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4), mats.puShield);
+        const meshGhost = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 8), mats.puGhost);
+        const meshTime = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 16), mats.puTime);
+
+        // Add all to group, toggle visibility on spawn
+        powerUpGroup.add(meshHealth);
+        powerUpGroup.add(meshShield);
+        powerUpGroup.add(meshGhost);
+        powerUpGroup.add(meshTime);
+
+        // Store references
+        powerUpGroup.userData = {
+            activeType: null,
+            meshes: {
+                health: meshHealth,
+                shield: meshShield,
+                ghost: meshGhost,
+                time: meshTime
+            }
+        };
+
+        platformGroup.add(powerUpGroup);
+
+
         platformGroup.visible = false;
 
         // User Data Structure
@@ -189,11 +243,13 @@ export class PlatformManager {
             soldier: soldierRef,    // The persistent soldier mesh
             healthBar: hpBarRef,
             mixer: mixer, // Store Mixer
+            powerUp: powerUpGroup, // PowerUp reference
 
             // Logic Flags
             isDangerous: false,
             hasJumpableObstacle: false,
             hasSoldier: false,
+            hasPowerUp: false,
 
             // Dynamic Data
             soldierData: { health: 11, maxHealth: 11, lastShotTime: 0 }
@@ -216,8 +272,14 @@ export class PlatformManager {
                 this.updateSoldierLogic(platform, deltaTime);
 
                 // Update Animation
-                if (platform.userData.mixer) {
-                    platform.userData.mixer.update(deltaTime);
+                if (platform.visible) {
+                    if (platform.userData.mixer) {
+                        platform.userData.mixer.update(deltaTime);
+                    }
+                    // Power-Up Rotation
+                    if (platform.userData.hasPowerUp && platform.userData.powerUp.visible) {
+                        platform.userData.powerUp.rotation.y += deltaTime * 2.0; // Spin
+                    }
                 }
             }
 
@@ -359,8 +421,16 @@ export class PlatformManager {
         if (platform.userData.soldier) platform.userData.soldier.visible = false;
         platform.userData.cubes.forEach(c => c.visible = false);
 
+        // Reset PowerUps
+        const pu = platform.userData.powerUp;
+        if (pu) {
+            pu.visible = false;
+            Object.values(pu.userData.meshes).forEach(m => m.visible = false);
+        }
+
         platform.userData.hasSoldier = false;
         platform.userData.hasJumpableObstacle = false;
+        platform.userData.hasPowerUp = false;
 
         if (isDangerous) {
             // Hazard Lane: Activate Random Cubes
@@ -392,12 +462,42 @@ export class PlatformManager {
                 }
             }
         } else {
-            // Safe Lane: Chance for obstacle
-            // REDUCED: 40% -> 25%
-            if (Math.random() < 0.25) {
+            // Safe Lane: Chance for obstacle OR PowerUp
+            const rand = Math.random();
+            const powerUpChance = 0.15; // 15% chance for PowerUp
+            const obstacleChance = 0.25; // 25% chance for Obstacle
+
+            if (rand < powerUpChance) {
+                // SPAWN POWER-UP
+                this.setupPowerUp(platform);
+            } else if (rand < powerUpChance + obstacleChance) {
+                // SPAWN OBSTACLE
                 this.setupObstacle(platform);
             }
         }
+    }
+
+    setupPowerUp(platform) {
+        const pu = platform.userData.powerUp;
+        if (!pu) return;
+
+        platform.userData.hasPowerUp = true;
+        pu.visible = true;
+
+        // Select Random Type
+        const types = ['health', 'shield', 'ghost', 'time'];
+        // Weights: Health(20%), Shield(30%), Ghost(25%), Time(25%)
+        // Simple random for now
+        const type = types[Math.floor(Math.random() * types.length)];
+
+        // Activate specific mesh
+        pu.userData.activeType = type;
+        Object.values(pu.userData.meshes).forEach(m => m.visible = false);
+        if (pu.userData.meshes[type]) {
+            pu.userData.meshes[type].visible = true;
+        }
+
+        // Animation: Rotate mesh in update loop
     }
 
     setupObstacle(platform) {

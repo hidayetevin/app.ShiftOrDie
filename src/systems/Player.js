@@ -22,7 +22,13 @@ export class Player {
         this.killCount = 0; // Track soldier kills for coin rewards
         this.tempVec3 = new THREE.Vector3(); // GC fix
         this.health = 2; // Default, will be updated by skin
+        this.health = 2; // Default, will be updated by skin
         this.maxHealth = 2;
+
+        // Power-Up States
+        this.hasShield = false;
+        this.isGhost = false;
+        this.shieldMesh = null;
 
         this.init();
     }
@@ -135,6 +141,20 @@ export class Player {
         const skinData = getSkinById(savedSkinId);
         this.maxHealth = skinData ? skinData.health : 2;
         this.health = this.maxHealth;
+
+        // Reset PowerUps
+        this.hasShield = false;
+        this.isGhost = false;
+        if (this.shieldMesh) this.shieldMesh.visible = false;
+        clearTimeout(this.ghostTimer);
+
+        // Restore opacity if ghost mode was active
+        this.mesh.traverse(c => {
+            if (c.isMesh) {
+                if (c.userData.orgOpacity !== undefined) c.material.opacity = c.userData.orgOpacity;
+                if (c.userData.orgTransparent !== undefined) c.material.transparent = c.userData.orgTransparent;
+            }
+        });
 
         if (this.game && this.game.ui) {
             this.game.ui.updateHealth(this.health, this.maxHealth);
@@ -611,7 +631,21 @@ export class Player {
     }
 
     takeDamage(amount) {
-        if (this.invulnerable || this.isDying) return;
+        if (this.invulnerable || this.isDying || this.isGhost) return; // Ghost also prevents damage
+
+        // Shield Protection
+        if (this.hasShield) {
+            console.log('🛡️ Shield blocked damage!');
+            this.hasShield = false;
+            if (this.shieldMesh) this.shieldMesh.visible = false;
+
+            // Shield break effect
+            if (this.game && this.game.vfx) {
+                this.game.vfx.emitBurst(this.mesh.position, 0x0088ff, 10, 0.5);
+            }
+            this.setInvulnerable(1000); // Brief iframe after shield break
+            return;
+        }
 
         this.health -= amount;
         console.log(`❤️ Player Health: ${this.health}/${this.maxHealth}`);
@@ -636,5 +670,100 @@ export class Player {
         }
     }
 
+    // --- POWER-UP LOGIC ---
+
+    collectPowerUp(type) {
+        console.log(`✨ Collected Power-Up: ${type}`);
+
+        // VFX
+        if (this.game && this.game.vfx) {
+            const color = type === 'health' ? 0xff0000 :
+                type === 'shield' ? 0x0088ff :
+                    type === 'ghost' ? 0xffffff : 0xffd700;
+            this.game.vfx.emitBurst(this.mesh.position, color, 15, 0.5);
+        }
+
+        switch (type) {
+            case 'health':
+                if (this.health < this.maxHealth) {
+                    this.health++;
+                    if (this.game && this.game.ui) this.game.ui.updateHealth(this.health, this.maxHealth);
+                }
+                break;
+            case 'shield':
+                this.activateShield();
+                break;
+            case 'ghost':
+                this.activateGhostMode();
+                break;
+            case 'time':
+                this.activateTimeSlow();
+                break;
+        }
+    }
+
+    activateShield() {
+        if (this.hasShield) return; // Refresh duration or stack? For now just active.
+        this.hasShield = true;
+
+        // Create Visual Shield
+        if (!this.shieldMesh) {
+            const geo = new THREE.SphereGeometry(0.6, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x0088ff,
+                transparent: true,
+                opacity: 0.3,
+                wireframe: true
+            });
+            this.shieldMesh = new THREE.Mesh(geo, mat);
+            this.shieldMesh.position.y = 1.0;
+            this.mesh.add(this.shieldMesh);
+        }
+        this.shieldMesh.visible = true;
+
+        // Auto-remove after some time? Plan said "Lasts until hit". Keep it permanent until hit.
+    }
+
+    activateGhostMode() {
+        if (this.isGhost) {
+            // Extend duration logic could go here
+            clearTimeout(this.ghostTimer);
+        }
+
+        this.isGhost = true;
+        console.log('👻 Ghost Mode Active');
+
+        // Visual
+        this.mesh.traverse(c => {
+            if (c.isMesh) {
+                if (!c.userData.orgOpacity) c.userData.orgOpacity = c.material.opacity;
+                if (!c.userData.orgTransparent) c.userData.orgTransparent = c.material.transparent;
+
+                c.material.transparent = true;
+                c.material.opacity = 0.4;
+            }
+        });
+
+        // Timer to reset
+        this.ghostTimer = setTimeout(() => {
+            this.isGhost = false;
+            console.log('👻 Ghost Mode Ended');
+
+            // Restore Visuals
+            this.mesh.traverse(c => {
+                if (c.isMesh) {
+                    c.material.opacity = c.userData.orgOpacity !== undefined ? c.userData.orgOpacity : 1.0;
+                    c.material.transparent = c.userData.orgTransparent !== undefined ? c.userData.orgTransparent : false;
+                }
+            });
+        }, 8000); // 8 Seconds
+    }
+
+    activateTimeSlow() {
+        console.log('⏳ Time Slow Active');
+        if (this.game) {
+            this.game.activateTimeSlow(5000); // 5 Seconds
+        }
+    }
 
 }
