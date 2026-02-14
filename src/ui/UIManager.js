@@ -459,7 +459,7 @@ export class UIManager {
         const div = document.createElement('div');
         div.className = 'ui-screen pause-screen';
         div.innerHTML = `
-                < h1 > ${i18n.t('game.paused')}</h1 >
+                <h1>${i18n.t('game.paused')}</h1>
                     <div class="menu-buttons">
                         <button id="btn-continue-game" class="btn-main">${i18n.t('game.continue')}</button>
                         <button id="btn-restart-paused">${i18n.t('game.restart')}</button>
