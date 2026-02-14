@@ -207,7 +207,31 @@ export class PlatformManager {
         // Actually, I should update the signature in step 1. But I didn't. 
         // I will use `new THREE...` here. Since it's init-time, it's acceptable.
 
-        const meshHealth = new THREE.Mesh(new THREE.OctahedronGeometry(0.4), mats.puHealth);
+        // Health: Heart Shape
+        const heartShape = new THREE.Shape();
+        const x = 0, y = 0;
+        heartShape.moveTo(x + 5, y + 5);
+        heartShape.bezierCurveTo(x + 5, y + 5, x + 4, y, x, y);
+        heartShape.bezierCurveTo(x - 6, y, x - 6, y + 7, x - 6, y + 7);
+        heartShape.bezierCurveTo(x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19);
+        heartShape.bezierCurveTo(x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7);
+        heartShape.bezierCurveTo(x + 16, y + 7, x + 16, y, x + 10, y);
+        heartShape.bezierCurveTo(x + 7, y, x + 5, y + 5, x + 5, y + 5);
+
+        const heartGeo = new THREE.ExtrudeGeometry(heartShape, {
+            depth: 4,
+            bevelEnabled: true,
+            bevelSegments: 2,
+            steps: 2,
+            bevelSize: 1,
+            bevelThickness: 1
+        });
+
+        heartGeo.scale(0.04, 0.04, 0.04);
+        heartGeo.rotateX(Math.PI); // Flip to point up correctly if needed
+        heartGeo.center(); // Center pivot
+
+        const meshHealth = new THREE.Mesh(heartGeo, mats.puHealth);
 
 
         // Shield: Atom/Energy Core Design
