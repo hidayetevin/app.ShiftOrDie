@@ -208,7 +208,19 @@ export class PlatformManager {
         // I will use `new THREE...` here. Since it's init-time, it's acceptable.
 
         const meshHealth = new THREE.Mesh(new THREE.OctahedronGeometry(0.4), mats.puHealth);
-        const meshShield = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4), mats.puShield);
+
+
+        // Shield: Atom/Energy Core Design
+        const meshShield = new THREE.Group();
+        const sCore = new THREE.Mesh(new THREE.IcosahedronGeometry(0.25, 1), mats.puShield);
+        const sRing1 = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.05, 8, 16), mats.puShield);
+        const sRing2 = sRing1.clone();
+        sRing2.rotation.x = Math.PI / 2;
+
+        meshShield.add(sCore);
+        meshShield.add(sRing1);
+        meshShield.add(sRing2);
+        // Note: Collision box will be calculated from group, should still be fine around 0.5 size.
         const meshGhost = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 8), mats.puGhost);
         const meshTime = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 16), mats.puTime);
 
