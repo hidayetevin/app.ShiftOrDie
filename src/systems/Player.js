@@ -763,13 +763,20 @@ export class Player {
         console.log('👻 Ghost Mode Active');
 
         // Visual
+        // Visual
         this.mesh.traverse(c => {
             if (c.isMesh) {
-                if (!c.userData.orgOpacity) c.userData.orgOpacity = c.material.opacity;
-                if (!c.userData.orgTransparent) c.userData.orgTransparent = c.material.transparent;
+                // Store original values if not stored yet
+                if (c.userData.orgOpacity === undefined) c.userData.orgOpacity = c.material.opacity;
+                if (c.userData.orgTransparent === undefined) c.userData.orgTransparent = c.material.transparent;
+
+                // Clone material if needed to avoid shared material side-effects (though redundant for single mesh)
+                // c.material = c.material.clone(); 
 
                 c.material.transparent = true;
-                c.material.opacity = 0.4;
+                c.material.opacity = 0.3; // More transparent
+                // c.material.depthWrite = false; // Optional: helps with transparency sorting but might cause weird look
+                c.material.needsUpdate = true;
             }
         });
 
@@ -781,8 +788,9 @@ export class Player {
             // Restore Visuals
             this.mesh.traverse(c => {
                 if (c.isMesh) {
-                    c.material.opacity = c.userData.orgOpacity !== undefined ? c.userData.orgOpacity : 1.0;
-                    c.material.transparent = c.userData.orgTransparent !== undefined ? c.userData.orgTransparent : false;
+                    if (c.userData.orgOpacity !== undefined) c.material.opacity = c.userData.orgOpacity;
+                    if (c.userData.orgTransparent !== undefined) c.material.transparent = c.userData.orgTransparent;
+                    c.material.needsUpdate = true;
                 }
             });
         }, 8000); // 8 Seconds
