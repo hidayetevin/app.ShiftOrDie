@@ -29,9 +29,11 @@ export class AdManager {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: false,
+                testingDevices: ['YOUR_TEST_DEVICE_ID'], // Console'da device ID gösterilecek
+                initializeForTesting: false, // Production mode - gerçek reklamlar
             });
-            console.log('AdManager: AdMob Initialized');
+            console.log('AdManager: AdMob Initialized (Production Mode)');
+            console.log('AdManager: Using Ad IDs:', CONFIG.ADS);
 
             this.setupListeners();
             this.prepareRewarded();
