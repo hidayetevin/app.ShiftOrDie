@@ -106,38 +106,26 @@ export class CollisionDetector {
             this.obstacleBox.min.z += 0.1; this.obstacleBox.max.z -= 0.1;
 
             if (this.playerBox.intersectsBox(this.obstacleBox)) {
+                // Simplified: Always damage unless clearly jumping over or landing on top
+                const playerY = this.player.mesh.position.y;
+                const cubeTopY = this.obstacleBox.max.y;
+                const playerBottomY = this.playerBox.min.y;
 
-                // Detailed overlap check for jump landing
-                const pMin = this.playerBox.min;
-                // ... rest of logic uses pMin/pMax so we don't need intersection check again if we trust intersectsBox
-                // But original logic calculated overlaps manually. Let's keep manual calculation for height logic.
+                // Landing check - very tight tolerance
+                const landingTolerance = 0.05; // Reduced from 0.2
+                const isLandingOnTop = playerBottomY >= cubeTopY - landingTolerance;
 
-                const pMax = this.playerBox.max;
-                const oMin = this.obstacleBox.min;
-                const oMax = this.obstacleBox.max;
+                // Jump height check - must be significantly higher
+                const jumpClearHeight = 1.2; // Increased from 0.9
+                const isJumpingOver = playerY > jumpClearHeight;
 
-                const overlapX = Math.max(0, Math.min(pMax.x, oMax.x) - Math.max(pMin.x, oMin.x));
-                const overlapZ = Math.max(0, Math.min(pMax.z, oMax.z) - Math.max(pMin.z, oMin.z));
-                const collisionDepth = 0.1; // Reduced tolerance
-
-                if (overlapX > collisionDepth && overlapZ > collisionDepth) {
-                    const cubeTopY = oMax.y;
-                    const playerBottomY = pMin.y;
-                    const landingTolerance = 0.2;
-
-                    if (playerBottomY >= cubeTopY - landingTolerance) {
-                        console.log('✅ Landed on CUBE! Safe.');
-                    } else {
-                        const playerHeight = this.player.mesh.position.y;
-                        const jumpThreshold = 0.9;
-
-                        if (playerHeight > jumpThreshold) {
-                            console.log('✅ Cleared CUBE!');
-                        } else {
-                            console.warn('💀 HIT CUBE!');
-                            this.player.takeDamage(1);
-                        }
-                    }
+                if (isLandingOnTop) {
+                    console.log('✅ Landed on CUBE! Safe.');
+                } else if (isJumpingOver) {
+                    console.log('✅ Cleared CUBE with high jump!');
+                } else {
+                    console.warn('💥 HIT CUBE! -1 HP');
+                    this.player.takeDamage(1);
                 }
             }
         }
