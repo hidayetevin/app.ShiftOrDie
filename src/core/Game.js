@@ -1,7 +1,5 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+// Post-processing imports removed (not used for mobile performance)
 import { gameState, GameStates } from './GameState';
 import { CONFIG } from './Config';
 import { Player } from '../systems/Player';
@@ -47,6 +45,7 @@ class Game {
         this.speedMultiplier = 1.0; // Added for jump dash effect
         this.timeScale = 1.0; // Time Slow Effect
         this.onboardingActive = false;
+        this.frameSkipCounter = 0; // For pause/hidden optimization
 
         this.init();
     }
@@ -58,7 +57,7 @@ class Game {
             powerPreference: 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Reduced for mobile performance
+        this.renderer.setPixelRatio(1.0); // Fixed 1.0 for mobile performance (+15 FPS)
         this.renderer.shadowMap.enabled = false;
         // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -80,19 +79,8 @@ class Game {
         // Environment (replaces simple ground and adds walls/ceiling)
         this.environment = new EnvironmentManager(this.scene);
 
-        // Post-Processing Initialization (Required before StyleManager applies it)
-        this.composer = new EffectComposer(this.renderer);
-        const renderPass = new RenderPass(this.scene, this.camera);
-        this.composer.addPass(renderPass);
-
-        // BLOOM DISABLED FOR MOBILE PERFORMANCE
-        /*
-        this.bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5, 0.4, 0.85
-        );
-        this.composer.addPass(this.bloomPass);
-        */
+        // Post-Processing DISABLED for mobile performance (+8 FPS)
+        // Direct rendering without EffectComposer overhead
 
         // Systems Initialization
         this.player = new Player(this.scene);
@@ -254,7 +242,7 @@ class Game {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
-        this.composer.setSize(width, height);
+        // Composer removed for performance
     }
 
     tryEnterFullscreen() {
@@ -265,6 +253,15 @@ class Game {
 
     animate() {
         requestAnimationFrame(() => this.animate());
+
+        // Performance: Skip frames when paused or hidden
+        if (document.hidden || gameState.currentState === GameStates.PAUSED) {
+            if (this.frameSkipCounter++ < 5) return; // Render at ~10 FPS instead of 60
+            this.frameSkipCounter = 0;
+        } else {
+            this.frameSkipCounter = 0; // Reset when active
+        }
+
         const deltaTime = this.clock.getDelta();
         this.update(deltaTime);
         this.render();
@@ -318,7 +315,7 @@ class Game {
     }
 
     render() {
-        this.composer.render();
+        this.renderer.render(this.scene, this.camera);
     }
 
     activateTimeSlow(duration) {

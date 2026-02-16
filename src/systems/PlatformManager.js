@@ -77,7 +77,7 @@ export class PlatformManager {
 
         // Shared Materials
         const mats = {
-            base: new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3, depthWrite: false }),
+            base: new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: false, opacity: 1.0, emissive: 0x003300, emissiveIntensity: 0.3 }),
             crate: new THREE.MeshBasicMaterial({ map: crateTexture }),
             jumpable: new THREE.MeshBasicMaterial({ map: crateTexture, color: 0xaaaaaa }),
             hpBg: new THREE.MeshBasicMaterial({ color: 0x000000 }),
@@ -85,8 +85,8 @@ export class PlatformManager {
             hpFg: new THREE.MeshBasicMaterial({ color: 0xff0000 }),
             // Power-Up Materials
             puHealth: new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0x550000 }),
-            puShield: new THREE.MeshLambertMaterial({ color: 0x0088ff, emissive: 0x002288, transparent: true, opacity: 0.8 }),
-            puGhost: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xaaaaaa, transparent: true, opacity: 0.6 }),
+            puShield: new THREE.MeshLambertMaterial({ color: 0x0088ff, emissive: 0x0044aa, emissiveIntensity: 0.6, transparent: false }),
+            puGhost: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x888888, emissiveIntensity: 0.5, transparent: false }),
             puTime: new THREE.MeshLambertMaterial({ color: 0xffaa00, emissive: 0xaa4400 })
         };
 
