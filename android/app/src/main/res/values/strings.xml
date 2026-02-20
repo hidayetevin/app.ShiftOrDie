@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Run Or Die</string>
     <string name="title_activity_main">Run Or Die</string>
-    <string name="package_name">com.shiftordie.app</string>
-    <string name="custom_url_scheme">com.shiftordie.app</string>
+    <string name="package_name">com.evnlabs.runordie</string>
+    <string name="custom_url_scheme">com.evnlabs.runordie</string>
 </resources>

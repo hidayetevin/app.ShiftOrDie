@@ -1,5 +1,5 @@
 {
-  "appId": "com.shiftordie.app",
+  "appId": "com.evnlabs.runordie",
   "appName": "Run Or Die",
   "webDir": "dist",
   "plugins": {

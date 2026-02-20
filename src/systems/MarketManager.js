@@ -2,7 +2,7 @@ import { WEAPON_CONFIG, SKIN_CONFIG } from './WeaponConfig';
 
 class MarketManager {
     constructor() {
-        this.storageKey = 'shiftordie_market_v1';
+        this.storageKey = 'runordie_market_v1';
         this.state = this.loadState();
     }
 

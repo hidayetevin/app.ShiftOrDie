@@ -1,4 +1,4 @@
-package com.shiftordie.app;
+package com.evnlabs.runordie;
 
 import android.os.Build;
 import android.os.Bundle;
